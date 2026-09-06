@@ -1,0 +1,8 @@
+*.zip
+.thumbnail
+bug/
+image.png
+.DS_Store
+node_modules/
+.next/
+dist/

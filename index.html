@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..500&amp;family=IBM+Plex+Sans:wght@300;400;500&amp;family=IBM+Plex+Mono:wght@300;400&amp;family=Noto+Serif+JP:wght@200;300&amp;display=swap" rel="stylesheet" />
+<script src="./image-slot.js"></script>
+<style>
+html { scroll-behavior: smooth; }
+body { margin:0; background:#f1e3ce; -webkit-font-smoothing:antialiased;
+  --grain:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAiIGhlaWdodD0iMTYwIj48ZmlsdGVyIGlkPSJuIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC45IiBudW1PY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjE2MCIgaGVpZ2h0PSIxNjAiIGZpbHRlcj0idXJsKCNuKSIvPjwvc3ZnPg=="); }
+* { box-sizing:border-box; }
+a { color:#2b3a4a; text-decoration:none; }
+a:hover { color:#5d7247; }
+:focus-visible { outline:2px solid #3f6b8f; outline-offset:3px; }
+::selection { background:#cfe0ea; }
+@keyframes drift { from { transform:translate3d(-34vw,0,0); } to { transform:translate3d(132vw,0,0); } }
+@keyframes fly { 0%{ transform:translate3d(6vw,6vh,0); opacity:0; } 7%{ opacity:.95; } 88%{ opacity:.95; } 100%{ transform:translate3d(-34vw,-8vh,0); opacity:0; } }
+@keyframes sway { from { transform:skewX(-0.7deg) translateY(0); } to { transform:skewX(0.9deg) translateY(1px); } }
+@keyframes sock { from { transform:rotate(-6deg); } to { transform:rotate(7deg); } }
+@keyframes fadeup { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+@keyframes draw { from { stroke-dashoffset:1; } to { stroke-dashoffset:0; } }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior:auto; }
+  *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+}
+</style>
+</helmet>
+<main style="font-family:'IBM Plex Sans',system-ui,sans-serif;color:#25303c;background:#f1e3ce;overflow-x:hidden">
+
+<header style="position:fixed;top:0;left:0;right:0;z-index:60">
+  <div id="navbg" style="position:absolute;inset:0;background:rgba(241,227,206,.94);border-bottom:1px solid #e2d1b4;opacity:0;transition:opacity .45s ease;backdrop-filter:blur(6px)"></div>
+  <div style="position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:clamp(14px,2vw,26px) clamp(18px,3.4vw,54px)">
+    <div style="display:flex;align-items:flex-start;gap:clamp(10px,2vw,26px);flex:0 0 auto">
+      <div style="width:clamp(0px,4.5vw,84px);height:1px;background:#5a6b78;margin-top:20px"></div>
+      <a href="#home" style="display:block">
+        <img src="assets/logo-lystiger.png" alt="Lystiger" style="display:block;width:clamp(110px,10vw,145px);height:auto" />
+      </a>
+    </div>
+
+    <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+      <nav aria-label="Sections" style="display:flex;gap:clamp(14px,2.4vw,38px);align-items:baseline;padding-top:12px">
+        <a href="#home" style="display:flex;gap:7px;align-items:baseline" style-hover="opacity:.62"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5b6874">01.</span><span style="font-size:13.5px;font-weight:500;letter-spacing:.01em">Home</span></a>
+        <a href="#story" style="display:flex;gap:7px;align-items:baseline" style-hover="opacity:.62"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5b6874">02.</span><span style="font-size:13.5px;font-weight:500">Story</span></a>
+        <a href="#projects" style="display:flex;gap:7px;align-items:baseline" style-hover="opacity:.62"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5b6874">03.</span><span style="font-size:13.5px;font-weight:500">Projects</span></a>
+        <a href="#experience" style="display:flex;gap:7px;align-items:baseline" style-hover="opacity:.62"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5b6874">04.</span><span style="font-size:13.5px;font-weight:500">Experience</span></a>
+        <a href="#beyond" style="display:flex;gap:7px;align-items:baseline" style-hover="opacity:.62"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5b6874">05.</span><span style="font-size:13.5px;font-weight:500">Beyond</span></a>
+        <a href="#contact" style="display:flex;gap:7px;align-items:baseline" style-hover="opacity:.62"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5b6874">06.</span><span style="font-size:13.5px;font-weight:500">Contact</span></a>
+      </nav>
+    </sc-if>
+
+    <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+      <button type="button" aria-label="Open menu" onClick="{{ toggleMenu }}" style="width:46px;height:46px;display:flex;flex-direction:column;justify-content:center;gap:5px;background:none;border:0;cursor:pointer;padding:11px">
+        <span style="display:block;height:1.5px;background:#25303c"></span>
+        <span style="display:block;height:1.5px;background:#25303c"></span>
+        <span style="display:block;height:1.5px;background:#25303c"></span>
+      </button>
+    </sc-if>
+  </div>
+</header>
+
+<sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:70;background:#f1e3ce;padding:22px clamp(20px,6vw,40px);display:flex;flex-direction:column">
+    <div style="display:flex;justify-content:flex-end">
+      <button type="button" aria-label="Close menu" onClick="{{ toggleMenu }}" style="width:46px;height:46px;background:none;border:0;font-size:26px;line-height:1;color:#25303c;cursor:pointer">×</button>
+    </div>
+    <nav style="display:flex;flex-direction:column;gap:4px;margin-top:6vh">
+      <a href="#home" onClick="{{ closeMenu }}" style="display:flex;gap:14px;align-items:baseline;padding:12px 0;border-bottom:1px solid #e3d3b6"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8a7d66">01</span><span style="font-family:Newsreader,serif;font-size:27px">Home</span></a>
+      <a href="#story" onClick="{{ closeMenu }}" style="display:flex;gap:14px;align-items:baseline;padding:12px 0;border-bottom:1px solid #e3d3b6"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8a7d66">02</span><span style="font-family:Newsreader,serif;font-size:27px">Story</span></a>
+      <a href="#projects" onClick="{{ closeMenu }}" style="display:flex;gap:14px;align-items:baseline;padding:12px 0;border-bottom:1px solid #e3d3b6"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8a7d66">03</span><span style="font-family:Newsreader,serif;font-size:27px">Projects</span></a>
+      <a href="#experience" onClick="{{ closeMenu }}" style="display:flex;gap:14px;align-items:baseline;padding:12px 0;border-bottom:1px solid #e3d3b6"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8a7d66">04</span><span style="font-family:Newsreader,serif;font-size:27px">Experience</span></a>
+      <a href="#beyond" onClick="{{ closeMenu }}" style="display:flex;gap:14px;align-items:baseline;padding:12px 0;border-bottom:1px solid #e3d3b6"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8a7d66">05</span><span style="font-family:Newsreader,serif;font-size:27px">Beyond</span></a>
+      <a href="#contact" onClick="{{ closeMenu }}" style="display:flex;gap:14px;align-items:baseline;padding:12px 0;border-bottom:1px solid #e3d3b6"><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8a7d66">06</span><span style="font-family:Newsreader,serif;font-size:27px">Contact</span></a>
+    </nav>
+    <p style="margin-top:auto;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.2em;color:#8a7d66">BUILDING A QUIETER, BRIGHTER TOMORROW</p>
+  </div>
+</sc-if>
+
+<section id="home" data-screen-label="Hero" style="position:relative;overflow:hidden;min-height:100svh;scroll-margin-top:0;background:#75a8cb url('assets/hero-master-bg.webp') no-repeat right bottom / cover">
+  <div aria-hidden="true" style="position:absolute;right:clamp(12px,1.6vw,30px);top:14%;z-index:4;writing-mode:vertical-rl;font-family:'Noto Serif JP',serif;font-weight:300;font-size:clamp(20px,2.1vw,32px);letter-spacing:.18em;color:#25313c;opacity:.9;line-height:1">風立ちぬ<span style="display:inline-block;width:1px;height:30px;background:#3d4b57;margin:14px 0"></span><span style="font-size:.42em;letter-spacing:.34em">生きねば</span></div>
+
+  <div aria-hidden="true" style="position:absolute;inset:0;z-index:4;pointer-events:none;background-image:var(--grain);background-size:160px 160px;opacity:.07;mix-blend-mode:overlay"></div>
+
+  <div style="position:relative;z-index:5;padding:clamp(126px,25vh,290px) clamp(22px,10vw,164px) clamp(56px,9vh,110px);max-width:1560px;margin:0 auto">
+    <p style="margin:0 0 clamp(14px,1.6vw,22px);font-family:'IBM Plex Mono',monospace;font-size:clamp(9.5px,.8vw,11.5px);letter-spacing:.3em;color:#2c3a46">BUILDING A QUIETER, BRIGHTER TOMORROW</p>
+    <h1 style="margin:0;font-family:Newsreader,serif;font-weight:500;font-size:clamp(44px,5.6vw,84px);line-height:.98;letter-spacing:-.018em;color:#1e2630;text-wrap:balance">Do Hung Anh</h1>
+    <p style="margin:clamp(12px,1.4vw,20px) 0 0;font-family:Newsreader,serif;font-size:clamp(18px,1.75vw,27px);font-weight:400;color:#1f2833">AI Systems · AI Engineer · MLOps</p>
+    <p style="margin:clamp(14px,1.6vw,22px) 0 0;max-width:36em;font-family:Newsreader,serif;font-size:clamp(15px,1.18vw,18px);line-height:1.62;color:#22303c">I build practical AI systems, from factory floors to personal tools,<br />with a belief that technology can make everyday life a little more human.</p>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:clamp(16px,2.2vw,34px);margin-top:clamp(24px,3vw,40px)">
+      <a href="#projects" style="display:inline-flex;align-items:center;gap:22px;padding:13px 21px;border:1px solid #33424f;font-size:13.5px;font-weight:500;letter-spacing:.02em;min-height:48px;white-space:nowrap;transition:background .3s ease,color .3s ease" style-hover="background:#25303c;color:#f4ead6">View My Work <span aria-hidden="true">→</span></a>
+      <a href="#story" style="display:inline-flex;align-items:center;gap:9px;font-size:13.5px;color:#2b3a47;min-height:44px;white-space:nowrap" style-hover="opacity:.65"><span aria-hidden="true">↓</span> Scroll to explore</a>
+    </div>
+    <sc-if value="{{ showQuote }}" hint-placeholder-val="{{ true }}">
+      <img src="assets/calligraphy.png" alt="“The wind is rising. We must try to live.” — Jiro Horikoshi" style="display:block;margin-top:clamp(34px,5vw,64px);width:clamp(250px,33vw,450px);height:auto;opacity:.82" />
+    </sc-if>
+  </div>
+</section>
+
+<section id="story" data-screen-label="Story" style="position:relative;background:#f1e3ce;scroll-margin-top:96px;padding:clamp(72px,8vw,132px) 0 clamp(56px,6vw,96px);overflow:hidden">
+  <div aria-hidden="true" style="position:absolute;inset:0;pointer-events:none;background-image:var(--grain);background-size:160px 160px;opacity:.11;mix-blend-mode:multiply"></div>
+  <div style="position:relative;max-width:1180px;margin:0 auto;padding:0 clamp(22px,6vw,64px)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:clamp(24px,3vw,44px)">
+      <span aria-hidden="true" style="display:block;width:7px;height:7px;border-radius:50%;background:#5d7247"></span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.26em;color:#8a7d66;white-space:nowrap">02 — THE STORY</span>
+      <span aria-hidden="true" style="flex:1;height:1px;background:#e0cfb1"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:clamp(32px,5vw,80px);align-items:start">
+      <div data-reveal="">
+        <h2 style="margin:0;font-family:Newsreader,serif;font-weight:500;font-size:clamp(38px,5vw,64px);line-height:1.02;letter-spacing:-.015em;color:#1e2630">Story</h2>
+        <p style="margin:clamp(14px,1.6vw,22px) 0 0;font-family:Newsreader,serif;font-size:clamp(17px,1.5vw,21px);line-height:1.6;color:#3b3a33;max-width:30em">Dream, struggle, experimentation, building — then the horizon again.</p>
+        <div style="margin-top:clamp(22px,3vw,38px);max-width:34em;display:flex;flex-direction:column;gap:clamp(12px,1.4vw,18px);font-size:clamp(14.5px,1.15vw,16px);line-height:1.72;color:#4a4740">
+          <p style="margin:0">I was interested in building ambitious systems, but my academic journey was inconsistent.</p>
+          <p style="margin:0">I struggled with some exams, retakes, learning consistency, and performing under pressure.</p>
+          <p style="margin:0">Instead of making “failure” my identity, I increasingly learned by building, experimenting, and creating systems around how I work.</p>
+          <p style="margin:0">That eventually led into larger projects and technical responsibility.</p>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:clamp(26px,3vw,40px)">
+        <div data-reveal="">
+          <svg viewBox="0 0 520 170" role="img" aria-label="Sketch of an uneven climb toward the horizon" style="width:100%;height:auto;display:block">
+            <g stroke="#cbbb9b" stroke-width="1" stroke-dasharray="2 5">
+              <line x1="0" y1="20" x2="520" y2="20"></line>
+              <line x1="0" y1="70" x2="520" y2="70"></line>
+              <line x1="0" y1="120" x2="520" y2="120"></line>
+            </g>
+            <path data-draw="" pathLength="1" d="M6 152 C 70 148, 96 108, 132 120 C 168 132, 176 92, 214 104 C 252 116, 254 70, 296 78 C 340 86, 352 46, 400 44 C 446 42, 480 28, 514 16" fill="none" stroke="#5d7247" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="1" stroke-dashoffset="1"></path>
+            <circle data-draw-dot="" cx="514" cy="16" r="3.4" fill="#5d7247" opacity="0"></circle>
+            <text x="8" y="166" font-family="IBM Plex Mono, monospace" font-size="8.5" letter-spacing="1.6" fill="#9c8f78">DREAM</text>
+            <text x="452" y="166" font-family="IBM Plex Mono, monospace" font-size="8.5" letter-spacing="1.6" fill="#9c8f78">HORIZON</text>
+          </svg>
+          <div style="display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:14px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:#8a7d66">
+            <span>DREAM</span><span aria-hidden="true">→</span><span>STRUGGLE</span><span aria-hidden="true">→</span><span>EXPERIMENT</span><span aria-hidden="true">→</span><span>BUILD</span><span aria-hidden="true">→</span><span>ARCHITECTURE</span><span aria-hidden="true">→</span><span>HORIZON</span>
+          </div>
+        </div>
+        <div data-reveal="" style="border-top:1px solid #ddcaa9;padding-top:clamp(18px,2vw,26px)">
+          <p style="margin:0 0 12px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.26em;color:#8a7d66">EDUCATION</p>
+          <h3 style="margin:0;font-family:Newsreader,serif;font-weight:500;font-size:clamp(20px,1.9vw,25px);line-height:1.25;color:#1e2630">B.Sc. in Information &amp; Communication Technology</h3>
+          <p style="margin:8px 0 0;font-size:14.5px;color:#4a4740">University of Science and Technology of Hanoi (USTH)</p>
+          <div style="display:flex;flex-wrap:wrap;gap:10px 30px;margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#5b5648">
+            <span>GPA <span style="color:#25303c">13.21 / 20</span></span>
+            <span>CLASSIFICATION <span style="color:#25303c">Good</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="projects" data-screen-label="Projects" style="position:relative;background:#f1e3ce;scroll-margin-top:96px;padding:clamp(56px,6vw,86px) 0 clamp(72px,8vw,120px);overflow:hidden;border-top:1px solid #e5d5b8">
+  <div aria-hidden="true" style="position:absolute;inset:0;pointer-events:none;background-image:var(--grain);background-size:160px 160px;opacity:.11;mix-blend-mode:multiply"></div>
+  <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+    <img src="assets/blueprint.png" alt="" aria-hidden="true" style="position:absolute;left:0;top:clamp(30px,5vw,70px);width:clamp(150px,17vw,262px);height:auto;opacity:.85;mix-blend-mode:multiply;pointer-events:none" />
+    <p aria-hidden="true" style="position:absolute;left:clamp(24px,3vw,52px);top:clamp(460px,44vw,500px);margin:0;font-family:Newsreader,serif;font-size:12.5px;line-height:1.5;color:#8a7d66">Designs for<br />a kinder tomorrow.</p>
+    <img src="assets/notepad.png" alt="" aria-hidden="true" style="position:absolute;right:0;bottom:clamp(50px,7vw,90px);width:clamp(120px,13vw,180px);height:auto;opacity:.95;pointer-events:none" />
+  </sc-if>
+
+  <div style="position:relative;max-width:1180px;margin:0 auto;padding:0 clamp(22px,6vw,64px)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:clamp(22px,2.6vw,36px)">
+      <span aria-hidden="true" style="display:block;width:7px;height:7px;border-radius:50%;background:#5d7247"></span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.26em;color:#8a7d66;white-space:nowrap">03 — SELECTED WORKS</span>
+      <span aria-hidden="true" style="flex:1;height:1px;background:#e0cfb1"></span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:clamp(20px,3vw,48px);align-items:end;margin-bottom:clamp(30px,4vw,52px)">
+      <div>
+        <h2 style="margin:0;font-family:Newsreader,serif;font-weight:500;font-size:clamp(38px,5vw,64px);line-height:1;letter-spacing:-.015em;color:#1e2630">Projects</h2>
+        <p style="margin:clamp(12px,1.4vw,18px) 0 0;font-family:Newsreader,serif;font-size:clamp(16px,1.45vw,20px);color:#3b3a33">From ideas on paper to systems in production.</p>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:clamp(20px,3vw,44px);justify-content:space-between;align-items:flex-end">
+        <p style="margin:0;font-size:clamp(13.5px,1.1vw,15px);line-height:1.65;color:#4a4740;max-width:26em">AI, infrastructure, and real-world applications.<br />Each project is a step toward a more capable and kinder future.</p>
+        <div id="filters" style="display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:#8a7d66">
+          <button type="button" data-tag="all" data-active="1" onClick="{{ onFilter }}" style="display:flex;align-items:center;gap:8px;background:none;border:0;padding:2px 0;cursor:pointer;font:inherit;color:#25303c;text-align:left"><span data-dot="" style="width:6px;height:6px;border-radius:50%;background:#25303c;display:block"></span>All</button>
+          <button type="button" data-tag="ai" onClick="{{ onFilter }}" style="display:flex;align-items:center;gap:8px;background:none;border:0;padding:2px 0;cursor:pointer;font:inherit;color:#8a7d66;text-align:left"><span data-dot="" style="width:6px;height:6px;border-radius:50%;background:transparent;display:block"></span>AI / ML</button>
+          <button type="button" data-tag="systems" onClick="{{ onFilter }}" style="display:flex;align-items:center;gap:8px;background:none;border:0;padding:2px 0;cursor:pointer;font:inherit;color:#8a7d66;text-align:left"><span data-dot="" style="width:6px;height:6px;border-radius:50%;background:transparent;display:block"></span>Systems</button>
+          <button type="button" data-tag="web" onClick="{{ onFilter }}" style="display:flex;align-items:center;gap:8px;background:none;border:0;padding:2px 0;cursor:pointer;font:inherit;color:#8a7d66;text-align:left"><span data-dot="" style="width:6px;height:6px;border-radius:50%;background:transparent;display:block"></span>Web / Product</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:clamp(18px,2.2vw,30px)">
+      <article data-reveal="" data-tags="ai systems" style="display:flex;flex-direction:column;background:#f7efe1;border:1px solid #e3d3b6;box-shadow:0 12px 26px -22px rgba(60,48,30,.75);transition:transform .35s ease,box-shadow .35s ease" style-hover="transform:translateY(-4px);box-shadow:0 18px 34px -22px rgba(60,48,30,.8)">
+        <div style="padding:9px 9px 0"><img src="assets/p1.png" alt="AOI inspection line with monitoring dashboards" loading="lazy" style="display:block;width:100%;aspect-ratio:2.1/1;object-fit:cover" /></div>
+        <div style="padding:clamp(16px,1.6vw,20px);display:flex;flex-direction:column;gap:9px;flex:1">
+          <h3 style="margin:0;font-family:Newsreader,serif;font-weight:500;font-size:clamp(19px,1.7vw,23px);color:#1e2630">AOI Observability</h3>
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.6;color:#8a7d66">FastAPI · Loki · Promtail · Grafana · React · Docker</p>
+          <p style="margin:0;font-size:14px;line-height:1.65;color:#4a4740">Logging and monitoring system for AOI production lines, focusing on reliability and real-world deployment.</p>
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-top:auto;padding-top:14px">
+            <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#9c8f78;max-width:22em">BUILT AROUND AI/AOI INSPECTION WORKFLOWS AND PRODUCTION OBSERVABILITY</p>
+            <span aria-hidden="true" style="font-size:17px;color:#25303c">→</span>
+          </div>
+        </div>
+      </article>
+
+      <article data-reveal="" data-tags="ai web" style="display:flex;flex-direction:column;background:#f7efe1;border:1px solid #e3d3b6;box-shadow:0 12px 26px -22px rgba(60,48,30,.75);transition:transform .35s ease,box-shadow .35s ease" style-hover="transform:translateY(-4px);box-shadow:0 18px 34px -22px rgba(60,48,30,.8)">
+        <div style="padding:9px 9px 0"><img src="assets/p2.png" alt="Residential district with parkland, illustrated" loading="lazy" style="display:block;width:100%;aspect-ratio:2.1/1;object-fit:cover" /></div>
+        <div style="padding:clamp(16px,1.6vw,20px);display:flex;flex-direction:column;gap:9px;flex:1">
+          <h3 style="margin:0;font-family:Newsreader,serif;font-weight:500;font-size:clamp(19px,1.7vw,23px);color:#1e2630">MoveInMate</h3>
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.6;color:#8a7d66">Next.js · FastAPI · Supabase · pgvector · Gemini · Groq · Docker</p>
+          <p style="margin:0;font-size:14px;line-height:1.65;color:#4a4740">Help new residents at Vinhomes Ocean Park navigate their journey with clarity, not confusion.</p>
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-top:auto;padding-top:14px">
+            <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#9c8f78;max-width:22em">TEAM LEAD, TEAM OF 4 · 10 SPRINTS · 924 BACKEND TESTS · DEPLOYED MVP</p>
+            <span aria-hidden="true" style="font-size:17px;color:#25303c">→</span>
+          </div>
+        </div>
+      </article>
+
+      <article data-reveal="" data-tags="ai systems" style="display:flex;flex-direction:column;background:#f7efe1;border:1px solid #e3d3b6;box-shadow:0 12px 26px -22px rgba(60,48,30,.75);transition:transform .35s ease,box-shadow .35s ease" style-hover="transform:translateY(-4px);box-shadow:0 18px 34px -22px rgba(60,48,30,.8)">
+        <div style="padding:9px 9px 0"><img src="assets/p3.png" alt="Person working at a laptop in a warm study, illustrated" loading="lazy" style="display:block;width:100%;aspect-ratio:2.1/1;object-fit:cover" /></div>
+        <div style="padding:clamp(16px,1.6vw,20px);display:flex;flex-direction:column;gap:9px;flex:1">
+          <h3 style="margin:0;font-family:Newsreader,serif;font-weight:500;font-size:clamp(19px,1.7vw,23px);color:#1e2630">Elysia</h3>
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.6;color:#8a7d66">Electron · React · local LLMs · llama.cpp · RAG / memory</p>
+          <p style="margin:0;font-size:14px;line-height:1.65;color:#4a4740">A personal AI operating layer to think, plan and build with me.</p>
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-top:auto;padding-top:14px">
+            <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#9c8f78;max-width:22em">LOCAL INFERENCE · PERSISTENT MEMORY · AGENT-ORIENTED TOOLING</p>
+            <span aria-hidden="true" style="font-size:17px;color:#25303c">→</span>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:20px;margin-top:clamp(26px,3vw,42px)">
+      <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.18em;color:#9c8f78">MORE WORK — SILENTVOIX / V-HAND · LYSSTACK · HASC</p>
+      <p aria-hidden="true" style="margin:0;font-family:'Noto Serif JP',serif;font-size:12.5px;letter-spacing:.14em;color:#8a7d66">よりよい明日へ</p>
+    </div>
+  </div>
+</section>
+
+<section id="experience" data-screen-label="Experience" style="position:relative;background:#f1e3ce;scroll-margin-top:96px;padding:clamp(64px,7vw,110px) 0;border-top:1px solid #e5d5b8;overflow:hidden">
+  <div aria-hidden="true" style="position:absolute;inset:0;pointer-events:none;background-image:var(--grain);background-size:160px 160px;opacity:.11;mix-blend-mode:multiply"></div>
+  <div style="position:relative;max-width:1180px;margin:0 auto;padding:0 clamp(22px,6vw,64px)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:clamp(22px,2.6vw,36px)">
+      <span aria-hidden="true" style="display:block;width:7px;height:7px;border-radius:50%;background:#5d7247"></span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.26em;color:#8a7d66;white-space:nowrap">04 — EXPERIENCE</span>
+      <span aria-hidden="true" style="flex:1;height:1px;background:#e0cfb1"></span>
+    </div>
+    <h2 style="margin:0 0 clamp(28px,3.4vw,48px);font-family:Newsreader,serif;font-weight:500;font-size:clamp(38px,5vw,64px);line-height:1;letter-spacing:-.015em;color:#1e2630">Experience</h2>
+    <div data-reveal="" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:clamp(20px,4vw,64px);border-top:1px solid #ddcaa9;padding-top:clamp(22px,2.6vw,34px)">
+      <div>
+        <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.14em;color:#5b5648">APR 2026 — JUN 2026</p>
+        <p style="margin:10px 0 0;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#9c8f78">HANOI, VIETNAM</p>
+      </div>
+      <div style="grid-column:span 2;min-width:0">
+        <h3 style="margin:0;font-family:Newsreader,serif;font-weight:500;font-size:clamp(23px,2.4vw,32px);line-height:1.15;color:#1e2630">AI Vision Inspection / AOI Intern</h3>
+        <p style="margin:8px 0 0;font-size:clamp(14.5px,1.2vw,16px);color:#3b3a33">Foxconn Fuyu Precision Component</p>
+        <p style="margin:clamp(14px,1.6vw,20px) 0 0;max-width:36em;font-size:clamp(14px,1.15vw,15.5px);line-height:1.72;color:#4a4740">Worked around production AOI inspection on NVIDIA SMT lines.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:clamp(16px,2vw,24px)">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#5b5648;border:1px solid #ddcaa9;padding:6px 10px;white-space:nowrap">COMPUTER VISION</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#5b5648;border:1px solid #ddcaa9;padding:6px 10px;white-space:nowrap">AOI</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#5b5648;border:1px solid #ddcaa9;padding:6px 10px;white-space:nowrap">YOLOV8</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#5b5648;border:1px solid #ddcaa9;padding:6px 10px;white-space:nowrap">PYTORCH</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#5b5648;border:1px solid #ddcaa9;padding:6px 10px;white-space:nowrap">FASTAPI</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#5b5648;border:1px solid #ddcaa9;padding:6px 10px;white-space:nowrap">MLOPS / OBSERVABILITY</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#5b5648;border:1px solid #ddcaa9;padding:6px 10px;white-space:nowrap">INDUSTRIAL PRODUCTION SYSTEMS</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="beyond" data-screen-label="Beyond" style="position:relative;background:#ece0c8;scroll-margin-top:96px;padding:clamp(64px,7vw,110px) 0 clamp(72px,8vw,120px);border-top:1px solid #e0cfb1;overflow:hidden">
+  <div aria-hidden="true" style="position:absolute;inset:0;pointer-events:none;background-image:var(--grain);background-size:160px 160px;opacity:.12;mix-blend-mode:multiply"></div>
+  <div style="position:relative;max-width:1180px;margin:0 auto;padding:0 clamp(22px,6vw,64px)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:clamp(22px,2.6vw,36px)">
+      <span aria-hidden="true" style="display:block;width:7px;height:7px;border-radius:50%;background:#5d7247"></span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.26em;color:#8a7d66;white-space:nowrap">05 — BEYOND</span>
+      <span aria-hidden="true" style="flex:1;height:1px;background:#dccbaa"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:clamp(20px,3vw,48px);align-items:end;margin-bottom:clamp(34px,4vw,56px)">
+      <h2 style="margin:0;font-family:Newsreader,serif;font-weight:500;font-size:clamp(38px,5vw,64px);line-height:1;letter-spacing:-.015em;color:#1e2630">Beyond</h2>
+      <p style="margin:0;font-family:Newsreader,serif;font-size:clamp(16px,1.45vw,20px);line-height:1.55;color:#3b3a33">Competitions, teams, and things made with other people.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:clamp(22px,3vw,38px)">
+      <figure data-reveal="" style="margin:0;background:#f7efe1;border:1px solid #e0cfb1;padding:10px 10px 16px;box-shadow:0 14px 28px -24px rgba(60,48,30,.85);transform:rotate(-1.1deg)">
+        <div style="position:relative;width:100%;aspect-ratio:4/3"><image-slot id="beyond-apec" shape="rect" fit="cover" placeholder="PLACEHOLDER — drop APEC / V-Hand photo"></image-slot></div>
+        <figcaption style="padding:14px 6px 0">
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;color:#5d7247">FIRST PRIZE</p>
+          <p style="margin:7px 0 0;font-family:Newsreader,serif;font-size:17.5px;line-height:1.3;color:#1e2630">APEC Innovation 2025–2026</p>
+          <p style="margin:6px 0 0;font-size:13px;line-height:1.55;color:#4a4740">V-Hand 2.0 smart sign-language glove</p>
+        </figcaption>
+      </figure>
+      <figure data-reveal="" style="margin:0;background:#f7efe1;border:1px solid #e0cfb1;padding:10px 10px 16px;box-shadow:0 14px 28px -24px rgba(60,48,30,.85);transform:rotate(.8deg)">
+        <div style="position:relative;width:100%;aspect-ratio:4/3"><image-slot id="beyond-usth" shape="rect" fit="cover" placeholder="PLACEHOLDER — drop USTH research photo"></image-slot></div>
+        <figcaption style="padding:14px 6px 0">
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;color:#5d7247">CONSOLATION PRIZE</p>
+          <p style="margin:7px 0 0;font-family:Newsreader,serif;font-size:17.5px;line-height:1.3;color:#1e2630">USTH Student Scientific Research Competition</p>
+        </figcaption>
+      </figure>
+      <figure data-reveal="" style="margin:0;background:#f7efe1;border:1px solid #e0cfb1;padding:10px 10px 16px;box-shadow:0 14px 28px -24px rgba(60,48,30,.85);transform:rotate(-.6deg)">
+        <div style="position:relative;width:100%;aspect-ratio:4/3"><image-slot id="beyond-vnu" shape="rect" fit="cover" placeholder="PLACEHOLDER — drop VNU Olympiad photo"></image-slot></div>
+        <figcaption style="padding:14px 6px 0">
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;color:#5d7247">CONSOLATION PRIZE</p>
+          <p style="margin:7px 0 0;font-family:Newsreader,serif;font-size:17.5px;line-height:1.3;color:#1e2630">VNU English Olympiad</p>
+        </figcaption>
+      </figure>
+      <figure data-reveal="" style="margin:0;background:#f7efe1;border:1px solid #e0cfb1;padding:10px 10px 16px;box-shadow:0 14px 28px -24px rgba(60,48,30,.85);transform:rotate(1.2deg)">
+        <div style="position:relative;width:100%;aspect-ratio:4/3"><image-slot id="beyond-macron" shape="rect" fit="cover" placeholder="PLACEHOLDER — drop USTH visit photo"></image-slot></div>
+        <figcaption style="padding:14px 6px 0">
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;color:#5d7247">CERTIFICATE OF APPRECIATION</p>
+          <p style="margin:7px 0 0;font-family:Newsreader,serif;font-size:17.5px;line-height:1.3;color:#1e2630">Coordination during President Emmanuel Macron’s visit to USTH</p>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section id="contact" data-screen-label="Contact" style="position:relative;overflow:hidden;scroll-margin-top:0;min-height:min(84svh,760px);display:flex;flex-direction:column;justify-content:center;background:linear-gradient(#cadde2 0%,#a9c9dc 22%,#8bb6d3 52%,#b6d1de 82%,#d7e2e0 100%)">
+  <div aria-hidden="true" style="position:absolute;inset:0;z-index:1;pointer-events:none">
+    <div class="cloud" style="position:absolute;top:14%;left:0;width:480px;height:160px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.8),rgba(255,255,255,0));filter:blur(18px);animation:drift 280s linear infinite;animation-delay:-60s"></div>
+    <div class="cloud" style="position:absolute;top:40%;left:0;width:340px;height:120px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.62),rgba(255,255,255,0));filter:blur(20px);animation:drift 340s linear infinite;animation-delay:-210s"></div>
+  </div>
+  <img src="assets/grass-tile.png" alt="" aria-hidden="true" loading="lazy" style="position:absolute;left:-4%;bottom:-2px;width:112%;height:clamp(40px,6vh,64px);object-fit:cover;object-position:bottom;z-index:2;mask-image:linear-gradient(to bottom,transparent,#000 55%);-webkit-mask-image:linear-gradient(to bottom,transparent,#000 55%);transform-origin:bottom center;animation:sway 13s ease-in-out infinite alternate" />
+  <div aria-hidden="true" style="position:absolute;inset:0;z-index:3;pointer-events:none;background-image:var(--grain);background-size:160px 160px;opacity:.07;mix-blend-mode:overlay"></div>
+
+  <div style="position:relative;z-index:4;max-width:1180px;margin:0 auto;width:100%;padding:clamp(70px,9vw,120px) clamp(22px,6vw,64px) clamp(90px,11vw,150px)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:clamp(26px,3vw,44px)">
+      <span aria-hidden="true" style="display:block;width:7px;height:7px;border-radius:50%;background:#3f5a3a"></span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.26em;color:#2f4152;white-space:nowrap">06 — HORIZON</span>
+      <span aria-hidden="true" style="flex:1;height:1px;background:rgba(47,65,82,.32)"></span>
+    </div>
+    <p style="margin:0;font-family:Newsreader,serif;font-size:clamp(26px,3.6vw,48px);line-height:1.24;letter-spacing:-.012em;color:#1b2530;max-width:24em">I still fail at things.<br />I'm just much better at building my way forward now.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:clamp(14px,2vw,26px);margin-top:clamp(34px,4.5vw,64px);max-width:900px">
+      <a href="#" style="flex:1 1 170px;display:flex;justify-content:space-between;align-items:center;gap:14px;border-top:1px solid rgba(31,42,54,.45);padding:14px 2px;min-height:52px;font-size:15px" style-hover="opacity:.6">GitHub <span aria-hidden="true">↗</span></a>
+      <a href="#" style="flex:1 1 170px;display:flex;justify-content:space-between;align-items:center;gap:14px;border-top:1px solid rgba(31,42,54,.45);padding:14px 2px;min-height:52px;font-size:15px" style-hover="opacity:.6">LinkedIn <span aria-hidden="true">↗</span></a>
+      <a href="#" style="flex:1 1 170px;display:flex;justify-content:space-between;align-items:center;gap:14px;border-top:1px solid rgba(31,42,54,.45);padding:14px 2px;min-height:52px;font-size:15px" style-hover="opacity:.6">Email <span aria-hidden="true">↗</span></a>
+      <a href="#" style="flex:1 1 170px;display:flex;justify-content:space-between;align-items:center;gap:14px;border-top:1px solid rgba(31,42,54,.45);padding:14px 2px;min-height:52px;font-size:15px" style-hover="opacity:.6">Résumé <span aria-hidden="true">↗</span></a>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;margin-top:clamp(40px,6vw,90px);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;color:#33465a">
+      <span>DO HUNG ANH · AI SYSTEMS · AI ENGINEER · MLOPS</span>
+      <span style="font-family:'Noto Serif JP',serif;letter-spacing:.14em">よりよい明日へ</span>
+    </div>
+  </div>
+</section>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showQuote&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;planeFlight&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;cloudDrift&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;gentle&quot;,&quot;slow&quot;,&quot;still&quot;],&quot;default&quot;:&quot;gentle&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Motion&quot;}}">
+class Component extends DCLogic {
+  state = { isDesktop: typeof window === 'undefined' ? true : window.innerWidth >= 1040, menuOpen: false };
+
+  componentDidMount() {
+    this.onResize = () => {
+      const d = window.innerWidth >= 1040;
+      if (d !== this.state.isDesktop) this.setState({ isDesktop: d, menuOpen: false });
+    };
+    window.addEventListener('resize', this.onResize);
+
+    const nav = document.getElementById('navbg');
+    this.onScroll = () => {
+      if (!nav) return;
+      nav.style.opacity = window.scrollY > window.innerHeight * 0.62 ? '1' : '0';
+    };
+    window.addEventListener('scroll', this.onScroll, { passive: true });
+    this.onScroll();
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const targets = Array.from(document.querySelectorAll('[data-reveal]'));
+    if (reduce || !('IntersectionObserver' in window)) {
+      targets.forEach(el => { el.style.opacity = '1'; });
+      document.querySelectorAll('[data-draw-dot]').forEach(d => { d.style.opacity = '1'; });
+      document.querySelectorAll('[data-draw]').forEach(p => { p.style.strokeDashoffset = '0'; });
+    } else {
+      targets.forEach(el => {
+        const t = el.style.transform || '';
+        if (t.indexOf('rotate(') === 0) el.dataset.rot = t.slice(7, -1);
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(16px)' + (el.dataset.rot ? ' rotate(' + el.dataset.rot + ')' : '');
+        el.style.transition = 'opacity .9s ease, transform .9s cubic-bezier(.2,.7,.2,1)';
+      });
+      this.io = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (!e.isIntersecting) return;
+          const el = e.target;
+          el.style.opacity = '1';
+          el.style.transform = el.dataset.rot ? 'rotate(' + el.dataset.rot + ')' : 'none';
+          el.querySelectorAll('[data-draw]').forEach(p => { p.style.animation = 'draw 2.6s cubic-bezier(.4,0,.2,1) forwards'; });
+          el.querySelectorAll('[data-draw-dot]').forEach(d => { d.style.transition = 'opacity .6s ease 2.4s'; d.style.opacity = '1'; });
+          this.io.unobserve(el);
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+      targets.forEach(el => this.io.observe(el));
+    }
+    this.applyMotion();
+  }
+
+  componentDidUpdate() { this.applyMotion(); }
+
+  applyMotion() {
+    const mode = this.props.cloudDrift || 'gentle';
+    const mult = mode === 'still' ? 0 : mode === 'slow' ? 1.7 : 1;
+    document.querySelectorAll('.cloud').forEach(el => {
+      el.style.animationPlayState = mult === 0 ? 'paused' : 'running';
+      if (mult !== 0 && !el.dataset.base) el.dataset.base = parseFloat(getComputedStyle(el).animationDuration);
+      if (mult !== 0 && el.dataset.base) el.style.animationDuration = (parseFloat(el.dataset.base) * mult) + 's';
+    });
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.onResize);
+    window.removeEventListener('scroll', this.onScroll);
+    if (this.io) this.io.disconnect();
+  }
+
+  onFilter = e => {
+    const tag = e.currentTarget.dataset.tag;
+    document.querySelectorAll('#filters button').forEach(b => {
+      const on = b.dataset.tag === tag;
+      b.style.color = on ? '#25303c' : '#8a7d66';
+      const dot = b.querySelector('[data-dot]');
+      if (dot) dot.style.background = on ? '#25303c' : 'transparent';
+    });
+    document.querySelectorAll('#cards article').forEach(a => {
+      const show = tag === 'all' || (a.dataset.tags || '').split(' ').indexOf(tag) > -1;
+      a.style.display = show ? 'flex' : 'none';
+    });
+  };
+
+  toggleMenu = () => this.setState(s => ({ menuOpen: !s.menuOpen }));
+  closeMenu = () => this.setState({ menuOpen: false });
+
+  renderVals() {
+    return {
+      isDesktop: this.state.isDesktop,
+      isMobile: !this.state.isDesktop,
+      menuOpen: this.state.menuOpen,
+      showQuote: this.props.showQuote ?? true,
+      planeFlight: this.props.planeFlight ?? true,
+      onFilter: this.onFilter,
+      toggleMenu: this.toggleMenu,
+      closeMenu: this.closeMenu
+    };
+  }
+}
+</script>
+</body>
+</html>

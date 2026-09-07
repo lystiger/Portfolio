@@ -6,6 +6,14 @@ interface RenderLoopOptimizerProps {
   isReducedMotion?: boolean;
 }
 
+// Interactive frames are capped at 60 FPS; ambient frames at 36 FPS.
+const INTERACTIVE_FPS = 60;
+const AMBIENT_FPS = 36;
+// Pointer/scroll events can fire hundreds of times per second. Reading the hero
+// rect on each one forces a synchronous layout, so the fallback check runs at
+// most this often; the IntersectionObserver handles the common case.
+const VISIBILITY_CHECK_INTERVAL = 100;
+
 export const RenderLoopOptimizer: React.FC<RenderLoopOptimizerProps> = ({
   isReducedMotion = false
 }) => {
@@ -14,13 +22,30 @@ export const RenderLoopOptimizer: React.FC<RenderLoopOptimizerProps> = ({
   const lastFrameTimeRef = useRef<number>(performance.now());
 
   useEffect(() => {
-    let heroEl = document.getElementById('home');
+    let heroEl: HTMLElement | null = null;
+    let observedEl: HTMLElement | null = null;
     let observer: IntersectionObserver | null = null;
+    let lastVisibilityCheck = 0;
+
+    // The host page can replace the pinned hero node after this effect runs
+    // (see hero-scene.tsx). Holding on to the old element would mean measuring
+    // a node the page no longer treats as the hero -- or, if it was detached, a
+    // permanently zero rect whose observer never fires again. getElementById is
+    // a cheap hash lookup and forces no layout, so just re-resolve every time.
+    const resolveHeroEl = () => {
+      heroEl = document.getElementById('home') ?? (heroEl?.isConnected ? heroEl : null);
+      if (observer && heroEl && heroEl !== observedEl) {
+        if (observedEl) observer.unobserve(observedEl);
+        observer.observe(heroEl);
+        observedEl = heroEl;
+      }
+      return heroEl;
+    };
 
     const checkHeroVisibility = () => {
-      if (!heroEl) heroEl = document.getElementById('home');
-      if (!heroEl) return true;
-      const rect = heroEl.getBoundingClientRect();
+      const el = resolveHeroEl();
+      if (!el) return true;
+      const rect = el.getBoundingClientRect();
       // Hero is in view if its bottom is below top of viewport and top is above bottom of viewport
       return rect.bottom > 0 && rect.top < window.innerHeight;
     };
@@ -36,13 +61,12 @@ export const RenderLoopOptimizer: React.FC<RenderLoopOptimizerProps> = ({
     if (typeof IntersectionObserver !== 'undefined') {
       observer = new IntersectionObserver(
         (entries) => {
-          const entry = entries[0];
+          const entry = entries[entries.length - 1];
           const inView = entry.isIntersecting && entry.intersectionRatio > 0 && checkHeroVisibility();
           updateHeroVisibility(inView);
         },
         { threshold: [0, 0.02, 0.1] }
       );
-      if (heroEl) observer.observe(heroEl);
     }
 
     const handleVisibilityChange = () => {
@@ -57,15 +81,21 @@ export const RenderLoopOptimizer: React.FC<RenderLoopOptimizerProps> = ({
 
     const handleInteraction = () => {
       activityState.markInteraction();
-      // Double check visibility on scroll/interaction
-      const inView = checkHeroVisibility();
-      if (inView !== activityState.isHeroVisible) {
-        activityState.isHeroVisible = inView;
+
+      // Throttled fallback for the case where the observer is stale or the hero
+      // node was swapped out; resolveHeroEl() re-binds the observer when needed.
+      const now = performance.now();
+      if (now - lastVisibilityCheck >= VISIBILITY_CHECK_INTERVAL) {
+        lastVisibilityCheck = now;
+        const inView = checkHeroVisibility();
+        if (inView !== activityState.isHeroVisible) {
+          activityState.isHeroVisible = inView;
+        }
       }
-      if (activityState.isHeroVisible && activityState.isTabVisible) {
-        invalidate();
-        ensureLoop();
-      }
+
+      // Never invalidate() here: tick owns every render so the frame-rate cap
+      // holds on displays that run above 60 Hz.
+      ensureLoop();
     };
 
     window.addEventListener('pointermove', handleInteraction, { passive: true });
@@ -89,7 +119,7 @@ export const RenderLoopOptimizer: React.FC<RenderLoopOptimizerProps> = ({
       }
 
       // Ambient hero targets 36 FPS (within 30-45 FPS window); interactive targets up to 60 FPS
-      const targetFps = isInteractive ? 60 : 36;
+      const targetFps = isInteractive ? INTERACTIVE_FPS : AMBIENT_FPS;
       const minInterval = 1000 / targetFps;
       const elapsed = now - lastFrameTimeRef.current;
 
@@ -103,7 +133,9 @@ export const RenderLoopOptimizer: React.FC<RenderLoopOptimizerProps> = ({
 
     const ensureLoop = () => {
       if (rafIdRef.current === null && activityState.isTabVisible && activityState.isHeroVisible) {
-        lastFrameTimeRef.current = performance.now();
+        // Back-date the clock by one interactive interval so a loop restarted by
+        // an interaction renders on its first tick instead of a frame later.
+        lastFrameTimeRef.current = performance.now() - 1000 / INTERACTIVE_FPS;
         rafIdRef.current = requestAnimationFrame(tick);
       }
     };
@@ -120,6 +152,7 @@ export const RenderLoopOptimizer: React.FC<RenderLoopOptimizerProps> = ({
         rafIdRef.current = null;
       }
       observer?.disconnect();
+      observedEl = null;
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('pointermove', handleInteraction);
       window.removeEventListener('wheel', handleInteraction);

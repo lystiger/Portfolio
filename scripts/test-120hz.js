@@ -8,20 +8,25 @@ async function test120Hz() {
   await page.addInitScript(() => {
     window.__stats120 = {
       rafCount: 0,
-      invalidates: 0
+      frameFires: 0
     };
 
-    // Replace rAF with accurate 120 Hz clock (8.333ms per tick)
+    // Replace rAF with a 120 Hz display cadence: one frame every 8.333ms.
+    // Callbacks receive performance.now() rather than a synthetic counter --
+    // the code under test seeds its own timestamps from performance.now(), and
+    // a private clock (which advances once per interval fire, no matter how
+    // many callbacks registered) drifts out of that domain and starves the
+    // frame-rate gate.
     const callbacks = new Map();
     let nextId = 1;
-    let clockTime = 0;
 
     setInterval(() => {
-      clockTime += 1000 / 120; // exactly 8.333ms elapsed per tick
+      window.__stats120.frameFires++;
       const cbs = Array.from(callbacks.entries());
       callbacks.clear();
+      const now = performance.now();
       for (const [id, cb] of cbs) {
-        try { cb(clockTime); } catch(e) {}
+        try { cb(now); } catch(e) {}
       }
     }, 1000 / 120);
 
@@ -35,8 +40,6 @@ async function test120Hz() {
       callbacks.delete(id);
     };
 
-    // Count invalidations by intercepting R3F invalidate on window
-    const origSetTimeout = window.setTimeout;
   });
 
   await page.goto('http://localhost:3000/?v=8', { waitUntil: 'domcontentloaded' });
@@ -62,9 +65,10 @@ async function test120Hz() {
     await page.evaluate(() => {
       window.__stats120.renders = 0;
       window.__stats120.rafCount = 0;
+      window.__stats120.frameFires = 0;
     });
 
-    const startTime = Date.now();
+    const startTime = performance.now();
     let stop = false;
     let actionPromise = null;
     if (actionFn) {
@@ -80,17 +84,20 @@ async function test120Hz() {
     stop = true;
     if (actionPromise) await actionPromise;
 
-    const duration = (Date.now() - startTime) / 1000;
+    const duration = (performance.now() - startTime) / 1000;
     const data = await page.evaluate(() => ({
       renders: window.__stats120.renders,
-      rafCount: window.__stats120.rafCount
+      rafCount: window.__stats120.rafCount,
+      frameFires: window.__stats120.frameFires
     }));
 
     const renderFps = data.renders / duration;
-    const rafRate = data.rafCount / duration;
+    // Display refresh is how often the synthetic vsync fired, independent of
+    // how many callbacks happened to be registered on each one.
+    const refreshHz = data.frameFires / duration;
 
-    console.log(`[${label.padEnd(20)}] Monitor Refresh: ${rafRate.toFixed(1).padStart(5)} Hz | WebGL Render: ${renderFps.toFixed(1).padStart(4)} FPS`);
-    return { renderFps, rafRate };
+    console.log(`[${label.padEnd(20)}] Monitor Refresh: ${refreshHz.toFixed(1).padStart(5)} Hz | WebGL Render: ${renderFps.toFixed(1).padStart(4)} FPS`);
+    return { renderFps, refreshHz };
   }
 
   // 1. Idle on 120 Hz monitor
@@ -127,12 +134,40 @@ async function test120Hz() {
   console.log(`- Offscreen target: 0 FPS (complete sleep). Actual: ${offscreen120.renderFps.toFixed(1)} FPS`);
   console.log(`- Hidden Tab target: 0 FPS (complete sleep). Actual: ${hidden120.renderFps.toFixed(1)} FPS`);
 
-  if (idle120.renderFps > 45 || interactive120.renderFps > 65) {
-    console.error('FAIL: Render loop followed display refresh rate!');
+  // NOTE ON BOUNDS: headless/software WebGL saturates the CPU well below the
+  // 36/60 FPS targets, so a shortfall is reported as a warning rather than a
+  // failure. What must hold in every environment is that the loop never exceeds
+  // its cap, never freezes while visible, and fully sleeps when it should.
+  const failures = [];
+  const warnings = [];
+
+  // Upper bounds: the loop must not follow the 120 Hz display.
+  if (idle120.renderFps > 45) failures.push(`idle ${idle120.renderFps.toFixed(1)} FPS exceeds the 45 FPS ceiling`);
+  if (interactive120.renderFps > 65) failures.push(`interactive ${interactive120.renderFps.toFixed(1)} FPS exceeds the 65 FPS ceiling`);
+  // Liveness: a frozen loop must not pass as "throttled".
+  if (idle120.renderFps < 1) failures.push(`idle ${idle120.renderFps.toFixed(1)} FPS: the render loop is frozen while the hero is visible`);
+  if (interactive120.renderFps < 1) failures.push(`interactive ${interactive120.renderFps.toFixed(1)} FPS: the render loop is frozen while interacting`);
+  // Sleep states must actually sleep.
+  if (offscreen120.renderFps > 2) failures.push(`offscreen ${offscreen120.renderFps.toFixed(1)} FPS should be ~0`);
+  if (hidden120.renderFps > 2) failures.push(`hidden tab ${hidden120.renderFps.toFixed(1)} FPS should be ~0`);
+  // The harness must be able to drive frames at all.
+  if (offscreen120.refreshHz < 90) failures.push(`synthetic display ran at ${offscreen120.refreshHz.toFixed(1)} Hz with nothing to render; the 120 Hz harness is broken`);
+
+  if (idle120.renderFps < 25) warnings.push(`idle ${idle120.renderFps.toFixed(1)} FPS is under the ~36 FPS target (display refresh only reached ${idle120.refreshHz.toFixed(1)} Hz: GPU/CPU-bound environment, not a throttling defect)`);
+  if (interactive120.renderFps < 40) warnings.push(`interactive ${interactive120.renderFps.toFixed(1)} FPS is under the ~60 FPS target (display refresh only reached ${interactive120.refreshHz.toFixed(1)} Hz: GPU/CPU-bound environment, not a throttling defect)`);
+
+  for (const w of warnings) console.warn(`WARN: ${w}`);
+
+  if (failures.length) {
+    console.error('FAIL:');
+    for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   } else {
     console.log('SUCCESS: Render loop successfully decoupled and throttled from 120 Hz display refresh rate!');
   }
 }
 
-test120Hz();
+test120Hz().catch((err) => {
+  console.error('FAIL: harness error:', err);
+  process.exit(1);
+});

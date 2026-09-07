@@ -27,6 +27,9 @@ export const Contrail: React.FC<ContrailProps> = ({
   const meshRef = React.useRef<THREE.Mesh>(null);
   const lastContrailTime = React.useRef(-1);
   const lastScrollProgress = React.useRef(-1);
+  // World-space head position the current geometry was baked at, so the ribbon
+  // can be offset to follow the aircraft between resamples.
+  const bakedHead = React.useRef({ x: 0, y: 0 });
   const CONTRAIL_INTERVAL = 1 / 25; // ~25 Hz update rate for procedural geometry (Requirement 8)
 
   const { geometry, material } = useMemo(() => {
@@ -67,17 +70,33 @@ export const Contrail: React.FC<ContrailProps> = ({
 
     material.opacity = flight.opacity;
 
+    // The aircraft moves every rendered frame, so the head of the ribbon has to
+    // track it every frame too. Only the spline resample below is throttled; in
+    // between resamples the whole ribbon rides along on the head delta, which
+    // costs a single spline evaluation.
+    const liveHeadNorm = tailSpline.getPoint(Math.min(1, Math.max(0, flight.tHead)));
+    const liveHeadX = bgPosX + liveHeadNorm.x * bgWidth;
+    const liveHeadY = bgPosY + liveHeadNorm.y * bgHeight;
+
     // Throttle procedural geometry calculation and GPU buffer upload to ~25 Hz
     const isFirstRun = lastContrailTime.current < 0;
     const timeElapsed = time - lastContrailTime.current;
     const progressChanged = Math.abs(scrollProgress - lastScrollProgress.current) > 0.0005;
 
     if (!isFirstRun && timeElapsed < CONTRAIL_INTERVAL && !progressChanged) {
+      meshRef.current.position.set(
+        liveHeadX - bakedHead.current.x,
+        liveHeadY - bakedHead.current.y,
+        0
+      );
       return;
     }
 
     lastContrailTime.current = time;
     lastScrollProgress.current = scrollProgress;
+    bakedHead.current.x = liveHeadX;
+    bakedHead.current.y = liveHeadY;
+    meshRef.current.position.set(0, 0, 0);
 
     const currentTHead = flight.tHead;
     const currentTTail = flight.tTail;

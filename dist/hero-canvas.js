@@ -35510,7 +35510,10 @@ function zD(e, t, n) {
 //#endregion
 //#region src/components/hero/Contrail.tsx
 var BD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, tailSpline: i, isReducedMotion: a = !1, historyLength: o = 55 }) => {
-	let s = v.useRef(null), c = v.useRef(-1), l = v.useRef(-1), { geometry: u, material: d } = (0, v.useMemo)(() => {
+	let s = v.useRef(null), c = v.useRef(-1), l = v.useRef(-1), u = v.useRef({
+		x: 0,
+		y: 0
+	}), { geometry: d, material: f } = (0, v.useMemo)(() => {
 		let e = new Wi(), t = new Float32Array(o * 2 * 3), n = new Float32Array(o * 2 * 4), r = [];
 		for (let e = 0; e < o - 1; e++) {
 			let t = e * 2, n = e * 2 + 1, i = (e + 1) * 2, a = (e + 1) * 2 + 1;
@@ -35526,29 +35529,32 @@ var BD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, tailSpline: i, isRedu
 			})
 		};
 	}, [o]);
-	return A_((f) => {
+	return A_((p) => {
 		if (!s.current) return;
-		let p = f.clock.getElapsedTime(), m = a ? 0 : ID.progress, h = zD(p, m, a);
-		d.opacity = h.opacity;
-		let g = c.current < 0, _ = p - c.current, v = Math.abs(m - l.current) > 5e-4;
-		if (!g && _ < .04 && !v) return;
-		c.current = p, l.current = m;
-		let y = h.tHead, b = h.tTail, x = u.attributes.position, S = u.attributes.color, C = x.array, w = S.array, T = [];
+		let m = p.clock.getElapsedTime(), h = a ? 0 : ID.progress, g = zD(m, h, a);
+		f.opacity = g.opacity;
+		let _ = i.getPoint(Math.min(1, Math.max(0, g.tHead))), v = e + _.x * n, y = t + _.y * r, b = c.current < 0, x = m - c.current, S = Math.abs(h - l.current) > 5e-4;
+		if (!b && x < .04 && !S) {
+			s.current.position.set(v - u.current.x, y - u.current.y, 0);
+			return;
+		}
+		c.current = m, l.current = h, u.current.x = v, u.current.y = y, s.current.position.set(0, 0, 0);
+		let C = g.tHead, w = g.tTail, T = d.attributes.position, E = d.attributes.color, D = T.array, O = E.array, k = [];
 		for (let a = 0; a < o; a++) {
-			let s = a / (o - 1), c = kn.lerp(y, b, s), l = i.getPoint(Math.min(1, Math.max(0, c)));
-			T.push(new Y(e + l.x * n, t + l.y * r, -3.01));
+			let s = a / (o - 1), c = kn.lerp(C, w, s), l = i.getPoint(Math.min(1, Math.max(0, c)));
+			k.push(new Y(e + l.x * n, t + l.y * r, -3.01));
 		}
 		for (let e = 0; e < o; e++) {
-			let t = T[e], n = T[Math.min(e + 1, o - 1)], r = n.x - t.x, i = n.y - t.y, a = Math.sqrt(r * r + i * i) || 1, s = -i / a, c = r / a, l = e / (o - 1), u = .014 + l * .024, d = Math.max(0, (1 - l * .82) * .88), f = e * 6;
-			C[f] = t.x + s * u, C[f + 1] = t.y + c * u, C[f + 2] = t.z, C[f + 3] = t.x - s * u, C[f + 4] = t.y - c * u, C[f + 5] = t.z;
+			let t = k[e], n = k[Math.min(e + 1, o - 1)], r = n.x - t.x, i = n.y - t.y, a = Math.sqrt(r * r + i * i) || 1, s = -i / a, c = r / a, l = e / (o - 1), u = .014 + l * .024, d = Math.max(0, (1 - l * .82) * .88), f = e * 6;
+			D[f] = t.x + s * u, D[f + 1] = t.y + c * u, D[f + 2] = t.z, D[f + 3] = t.x - s * u, D[f + 4] = t.y - c * u, D[f + 5] = t.z;
 			let p = e * 8;
-			w[p] = .98, w[p + 1] = .97, w[p + 2] = .95, w[p + 3] = d, w[p + 4] = .98, w[p + 5] = .97, w[p + 6] = .95, w[p + 7] = d;
+			O[p] = .98, O[p + 1] = .97, O[p + 2] = .95, O[p + 3] = d, O[p + 4] = .98, O[p + 5] = .97, O[p + 6] = .95, O[p + 7] = d;
 		}
-		x.needsUpdate = !0, S.needsUpdate = !0;
+		T.needsUpdate = !0, E.needsUpdate = !0;
 	}), /* @__PURE__ */ (0, Ng.jsx)("mesh", {
 		ref: s,
-		geometry: u,
-		material: d
+		geometry: d,
+		material: f
 	});
 }, VD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, isReducedMotion: i = !1 }) => {
 	let a = (0, v.useRef)(null), o = (0, v.useRef)(null), s = P_(du, "assets/plane.png"), c = 150 / 1376 * n, l = 62 / 768 * r, u = 45 / 150 * c, d = -.27419354838709675 * l, f = (0, v.useMemo)(() => new Rs([
@@ -35713,53 +35719,59 @@ var GD = ({ isReducedMotion: e = !1 }) => {
 			})]
 		})
 	] });
-}, KD = ({ isReducedMotion: e = !1 }) => {
+}, KD = 60, qD = 36, JD = 100, YD = ({ isReducedMotion: e = !1 }) => {
 	let { invalidate: t } = k_(), n = (0, v.useRef)(null), r = (0, v.useRef)(performance.now());
 	return (0, v.useEffect)(() => {
-		let i = document.getElementById("home"), a = null, o = () => {
-			if (i ||= document.getElementById("home"), !i) return !0;
-			let e = i.getBoundingClientRect();
-			return e.bottom > 0 && e.top < window.innerHeight;
-		}, s = (e) => {
-			UD.isHeroVisible = e, e && UD.isTabVisible && (t(), d());
+		let i = null, a = null, o = null, s = 0, c = () => (i = document.getElementById("home") ?? (i?.isConnected ? i : null), o && i && i !== a && (a && o.unobserve(a), o.observe(i), a = i), i), l = () => {
+			let e = c();
+			if (!e) return !0;
+			let t = e.getBoundingClientRect();
+			return t.bottom > 0 && t.top < window.innerHeight;
+		}, u = (e) => {
+			UD.isHeroVisible = e, e && UD.isTabVisible && (t(), m());
 		};
-		typeof IntersectionObserver < "u" && (a = new IntersectionObserver((e) => {
-			let t = e[0], n = t.isIntersecting && t.intersectionRatio > 0 && o();
-			s(n);
+		typeof IntersectionObserver < "u" && (o = new IntersectionObserver((e) => {
+			let t = e[e.length - 1], n = t.isIntersecting && t.intersectionRatio > 0 && l();
+			u(n);
 		}, { threshold: [
 			0,
 			.02,
 			.1
-		] }), i && a.observe(i));
-		let c = () => {
+		] }));
+		let d = () => {
 			let e = document.visibilityState !== "hidden";
-			UD.isTabVisible = e, e && UD.isHeroVisible && (t(), d());
+			UD.isTabVisible = e, e && UD.isHeroVisible && (t(), m());
 		};
-		document.addEventListener("visibilitychange", c);
-		let l = () => {
+		document.addEventListener("visibilitychange", d);
+		let f = () => {
 			UD.markInteraction();
-			let e = o();
-			e !== UD.isHeroVisible && (UD.isHeroVisible = e), UD.isHeroVisible && UD.isTabVisible && (t(), d());
+			let e = performance.now();
+			if (e - s >= JD) {
+				s = e;
+				let t = l();
+				t !== UD.isHeroVisible && (UD.isHeroVisible = t);
+			}
+			m();
 		};
-		window.addEventListener("pointermove", l, { passive: !0 }), window.addEventListener("wheel", l, { passive: !0 }), window.addEventListener("touchmove", l, { passive: !0 }), window.addEventListener("scroll", l, { passive: !0 });
-		let u = (i) => {
+		window.addEventListener("pointermove", f, { passive: !0 }), window.addEventListener("wheel", f, { passive: !0 }), window.addEventListener("touchmove", f, { passive: !0 }), window.addEventListener("scroll", f, { passive: !0 });
+		let p = (i) => {
 			if (n.current = null, !UD.isTabVisible || !UD.isHeroVisible) return;
 			let a = UD.isInteractive();
 			if (e && !a) return;
-			let o = 1e3 / (a ? 60 : 36), s = i - r.current;
-			s >= o && (r.current = i - s % o, t()), n.current = requestAnimationFrame(u);
-		}, d = () => {
-			n.current === null && UD.isTabVisible && UD.isHeroVisible && (r.current = performance.now(), n.current = requestAnimationFrame(u));
+			let o = 1e3 / (a ? KD : qD), s = i - r.current;
+			s >= o && (r.current = i - s % o, t()), n.current = requestAnimationFrame(p);
+		}, m = () => {
+			n.current === null && UD.isTabVisible && UD.isHeroVisible && (r.current = performance.now() - 1e3 / KD, n.current = requestAnimationFrame(p));
 		};
-		return UD.isTabVisible = document.visibilityState !== "hidden", UD.isHeroVisible = o(), t(), d(), () => {
-			n.current !== null && (cancelAnimationFrame(n.current), n.current = null), a?.disconnect(), document.removeEventListener("visibilitychange", c), window.removeEventListener("pointermove", l), window.removeEventListener("wheel", l), window.removeEventListener("touchmove", l), window.removeEventListener("scroll", l);
+		return UD.isTabVisible = document.visibilityState !== "hidden", UD.isHeroVisible = l(), t(), m(), () => {
+			n.current !== null && (cancelAnimationFrame(n.current), n.current = null), o?.disconnect(), a = null, document.removeEventListener("visibilitychange", d), window.removeEventListener("pointermove", f), window.removeEventListener("wheel", f), window.removeEventListener("touchmove", f), window.removeEventListener("scroll", f);
 		};
 	}, [t, e]), null;
 };
 //#endregion
 //#region src/hero-scene.tsx
 cw.registerPlugin(ED);
-var qD = () => {
+var XD = () => {
 	typeof window < "u" && (window.__HERO_APP_RENDERS__ = (window.__HERO_APP_RENDERS__ || 0) + 1);
 	let [e, t] = (0, v.useState)(!1);
 	return (0, v.useEffect)(() => {
@@ -35839,13 +35851,13 @@ var qD = () => {
 			pointerEvents: "none",
 			zIndex: 0
 		},
-		children: [/* @__PURE__ */ (0, Ng.jsx)(GD, { isReducedMotion: e }), /* @__PURE__ */ (0, Ng.jsx)(KD, { isReducedMotion: e })]
+		children: [/* @__PURE__ */ (0, Ng.jsx)(GD, { isReducedMotion: e }), /* @__PURE__ */ (0, Ng.jsx)(YD, { isReducedMotion: e })]
 	});
 };
-function JD() {
+function ZD() {
 	let e = document.getElementById("hero-scene-root"), t = document.getElementById("home");
-	e && t ? (console.log("[HeroScene] Mounting R3F canvas to #hero-scene-root (DOM ready)..."), (0, y.createRoot)(e).render(/* @__PURE__ */ (0, Ng.jsx)(qD, {}))) : setTimeout(JD, 30);
+	e && t ? (console.log("[HeroScene] Mounting R3F canvas to #hero-scene-root (DOM ready)..."), (0, y.createRoot)(e).render(/* @__PURE__ */ (0, Ng.jsx)(XD, {}))) : setTimeout(ZD, 30);
 }
-document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", JD) : JD();
+document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", ZD) : ZD();
 //#endregion
-export { qD as HeroApp };
+export { XD as HeroApp };

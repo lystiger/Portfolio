@@ -6,7 +6,6 @@
 <script src="./support.js"></script>
 </head>
 <body>
-<div id="hero-scene-root" class="hero-canvas"></div>
 <x-dc>
 <helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -23,9 +22,6 @@ a:hover { color:#5d7247; }
 :focus-visible { outline:2px solid #3f6b8f; outline-offset:3px; }
 ::selection { background:#cfe0ea; }
 @keyframes drift { from { transform:translate3d(-34vw,0,0); } to { transform:translate3d(132vw,0,0); } }
-@keyframes fly { 0%{ transform:translate3d(6vw,6vh,0); opacity:0; } 7%{ opacity:.95; } 88%{ opacity:.95; } 100%{ transform:translate3d(-34vw,-8vh,0); opacity:0; } }
-@keyframes sway { from { transform:skewX(-0.7deg) translateY(0); } to { transform:skewX(0.9deg) translateY(1px); } }
-@keyframes sock { from { transform:rotate(-6deg); } to { transform:rotate(7deg); } }
 @keyframes fadeup { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
 @keyframes draw { from { stroke-dashoffset:1; } to { stroke-dashoffset:0; } }
 @keyframes horizonGrassSway {
@@ -50,15 +46,91 @@ a:hover { color:#5d7247; }
   z-index: 2;
   will-change: transform;
 }
+
+/* ── Hero layered media ─────────────────────────────────────────────
+   #home stacks four decorative layers below the HTML copy:
+     1 .hero-base       static illustration (canonical background + fallback)
+     2 .hero-plane      airplane + contrail, one traversal then a long gap
+     3 .hero-character  transparent character plate, registered to .hero-base
+     4 .hero-grass      seamless 8s WebM, foreground grass only
+   Every layer is absolutely positioned inside a fixed-height section, so
+   none of them can shift layout. Under prefers-reduced-motion the <picture>
+   below serves the original composited still and layers 2-4 are removed. */
+.hero-media { position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+.hero-base, .hero-character {
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit:cover; object-position:right bottom;
+  display:block; user-select:none;
+}
+.hero-base { z-index:1; }
+.hero-character { z-index:3; }
+
+/* Airplane. It parks off the right edge at opacity 0 and is flown by the
+   Web Animations API rather than a CSS class, because the host re-renders
+   the hero and strips class/attribute changes made from script. */
+.hero-plane {
+  position:absolute; left:100%; top:15%; z-index:2;
+  width:clamp(38px,4.4vw,70px);
+  opacity:0; will-change:transform,opacity;
+}
+.hero-plane img { display:block; width:100%; height:auto; }
+.hero-contrail {
+  position:absolute; top:44%; left:82%;
+  width:clamp(90px,15vw,260px); height:1.6px;
+  transform-origin:left center; transform:rotate(2.4deg);
+  background:linear-gradient(90deg,rgba(255,255,255,.5),rgba(255,255,255,0));
+  filter:blur(1.3px);
+}
+
+/* Foreground grass. Height is a viewport band, so `cover` crops the video
+   from the bottom the same way the hero illustration is cropped. The
+   element carries no source until script attaches one and paints nothing
+   until then, so it can stay opaque instead of being revealed by a class. */
+.hero-grass {
+  position:absolute; left:0; right:0; bottom:-1px; z-index:4;
+  width:100%; height:clamp(60px,8vh,104px);
+  object-fit:cover; object-position:bottom center;
+  pointer-events:none;
+  /* Fade the top of the band so it grows out of the painted meadow rather
+     than sitting on it as a strip with a visible upper edge. */
+  -webkit-mask-image:linear-gradient(180deg,transparent 0,rgba(0,0,0,.8) 34%,#000 68%);
+          mask-image:linear-gradient(180deg,transparent 0,rgba(0,0,0,.8) 34%,#000 68%);
+}
+
+/* Mobile: reframe the landscape illustration so the figure is centred
+   instead of pushed off the left edge, and skip the video entirely —
+   iOS Low Power Mode blocks autoplay, and the painted grass already
+   reads correctly at this size. */
+@media (max-width:768px) {
+  /* `cover` on a portrait viewport would show a 26%-wide slice of the
+     landscape plate and blow the figure up over the copy. Anchor the art
+     to the lower half at close to its own aspect instead, and dissolve its
+     top edge into the section colour so the join reads as haze. */
+  .hero-base, .hero-character {
+    top:auto; bottom:0; height:56%;
+    object-position:66% bottom;
+    -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 20%);
+            mask-image:linear-gradient(180deg,transparent 0,#000 20%);
+  }
+  .hero-grass { display:none; }
+  .hero-plane { top:9%; width:clamp(40px,10vw,60px); }
+  .hero-contrail { width:clamp(60px,14vw,120px); }
+  .hero-copy { padding-top:clamp(96px,14vh,140px) !important; padding-bottom:clamp(24px,4vh,40px) !important; }
+  /* Both calls to action on one row only just fit at 390px, so the row
+     rewraps when the webfont swaps in and drags everything under it. Stack
+     them instead: each child has a min-height, so the row's height no
+     longer depends on font metrics. */
+  .hero-cta { flex-direction:column; align-items:flex-start; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior:auto; }
   *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
   .horizon-grass { animation: none !important; transform: none !important; }
+  /* The still served by <picture> already contains the figure and the
+     airplane, so the moving plates are removed rather than frozen. */
+  .hero-character, .hero-plane, .hero-grass { display:none !important; }
 }
-.hero-canvas { position:fixed; inset:0; width:100vw; height:100vh; pointer-events:none; z-index:0; }
-body.has-webgl main { background-color:transparent !important; }
-body.has-webgl #home { background-image:none !important; background-color:transparent !important; }
-body.has-webgl #home img[src*="grass-tile"] { display:none !important; }
 </style>
 </helmet>
 <main style="font-family:'IBM Plex Sans',system-ui,sans-serif;color:#25303c;background:#f1e3ce;overflow-x:hidden">
@@ -111,17 +183,37 @@ body.has-webgl #home img[src*="grass-tile"] { display:none !important; }
   </div>
 </sc-if>
 
-<section id="home" data-screen-label="Hero" style="position:relative;overflow:hidden;min-height:100svh;scroll-margin-top:0;background:#75a8cb url('assets/hero-master-bg.webp') no-repeat right bottom / cover">
+<section id="home" data-screen-label="Hero" style="position:relative;overflow:hidden;min-height:100svh;scroll-margin-top:0;background:#75a8cb">
+  <div class="hero-media" aria-hidden="true">
+    <picture>
+      <source media="(prefers-reduced-motion: reduce)" srcset="assets/hero-master-bg.webp" />
+      <img class="hero-base" src="assets/hero-bg-clean.webp" alt="" width="1376" height="768" fetchpriority="high" decoding="async" />
+    </picture>
+    <sc-if value="{{ planeFlight }}" hint-placeholder-val="{{ true }}">
+      <div class="hero-plane" data-hero-plane>
+        <span class="hero-contrail"></span>
+        <img src="assets/plane.png" alt="" width="150" height="62" loading="lazy" decoding="async" />
+      </div>
+    </sc-if>
+    <picture>
+      <!-- display:none does not stop the fetch, and under reduced motion the
+           still already contains the figure, so swap in an empty pixel. -->
+      <source media="(prefers-reduced-motion: reduce)" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" />
+      <img class="hero-character" src="assets/layer-character-full.png" alt="" width="1376" height="768" decoding="async" />
+    </picture>
+    <video class="hero-grass" data-hero-grass data-src="assets/hero-grass-loop.webm" width="1920" height="266" muted loop playsinline autoplay preload="none" disablepictureinpicture aria-hidden="true"></video>
+  </div>
+
   <div aria-hidden="true" style="position:absolute;right:clamp(12px,1.6vw,30px);top:14%;z-index:4;writing-mode:vertical-rl;font-family:'Noto Serif JP',serif;font-weight:300;font-size:clamp(20px,2.1vw,32px);letter-spacing:.18em;color:#25313c;opacity:.9;line-height:1">風立ちぬ<span style="display:inline-block;width:1px;height:30px;background:#3d4b57;margin:14px 0"></span><span style="font-size:.42em;letter-spacing:.34em">生きねば</span></div>
 
   <div aria-hidden="true" style="position:absolute;inset:0;z-index:4;pointer-events:none;background-image:var(--grain);background-size:160px 160px;opacity:.07;mix-blend-mode:overlay"></div>
 
-  <div style="position:relative;z-index:5;padding:clamp(126px,25vh,290px) clamp(22px,10vw,164px) clamp(56px,9vh,110px);max-width:1560px;margin:0 auto">
+  <div class="hero-copy" style="position:relative;z-index:5;padding:clamp(126px,25vh,290px) clamp(22px,10vw,164px) clamp(56px,9vh,110px);max-width:1560px;margin:0 auto">
     <p style="margin:0 0 clamp(14px,1.6vw,22px);font-family:'IBM Plex Mono',monospace;font-size:clamp(9.5px,.8vw,11.5px);letter-spacing:.3em;color:#2c3a46">BUILDING A QUIETER, BRIGHTER TOMORROW</p>
     <h1 style="margin:0;font-family:Newsreader,serif;font-weight:500;font-size:clamp(44px,5.6vw,84px);line-height:.98;letter-spacing:-.018em;color:#1e2630;text-wrap:balance">Do Hung Anh</h1>
     <p style="margin:clamp(12px,1.4vw,20px) 0 0;font-family:Newsreader,serif;font-size:clamp(18px,1.75vw,27px);font-weight:400;color:#1f2833">AI Systems · AI Engineer · MLOps</p>
     <p style="margin:clamp(14px,1.6vw,22px) 0 0;max-width:36em;font-family:Newsreader,serif;font-size:clamp(15px,1.18vw,18px);line-height:1.62;color:#22303c">I build practical AI systems, from factory floors to personal tools,<br />with a belief that technology can make everyday life a little more human.</p>
-    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:clamp(16px,2.2vw,34px);margin-top:clamp(24px,3vw,40px)">
+    <div class="hero-cta" style="display:flex;flex-wrap:wrap;align-items:center;gap:clamp(16px,2.2vw,34px);margin-top:clamp(24px,3vw,40px)">
       <a href="#projects" style="display:inline-flex;align-items:center;gap:22px;padding:13px 21px;border:1px solid #33424f;font-size:13.5px;font-weight:500;letter-spacing:.02em;min-height:48px;white-space:nowrap;transition:background .3s ease,color .3s ease" style-hover="background:#25303c;color:#f4ead6">View My Work <span aria-hidden="true">→</span></a>
       <a href="#story" style="display:inline-flex;align-items:center;gap:9px;font-size:13.5px;color:#2b3a47;min-height:44px;white-space:nowrap" style-hover="opacity:.65"><span aria-hidden="true">↓</span> Scroll to explore</a>
     </div>
@@ -465,6 +557,83 @@ class Component extends DCLogic {
   }
 }
 </script>
-<script type="module" src="./dist/hero-canvas.js?v=8"></script>
+<script>
+/* Hero foreground media driver.
+   Two jobs, both no-ops under prefers-reduced-motion:
+     1. Attach the grass loop's source only on viewports that will play it,
+        so phones never download the file.
+     2. Fly the airplane once shortly after load, then replay on a long,
+        randomised interval so it never reads as a fixed cycle.
+   The host re-renders #home from a template, which strips classes and
+   data-attributes set from script. State therefore lives on expando
+   properties and the flight runs through the Web Animations API, neither
+   of which a DOM patcher touches. */
+(function () {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var FLIGHT_MS = 11000;
+  var GAP_MIN_MS = 46000;
+  var GAP_RANGE_MS = 72000;
+  var timer = 0;
+
+  function mountGrass() {
+    var video = document.querySelector('[data-hero-grass]');
+    if (!video || video.__heroMounted) return;
+    if (!window.matchMedia('(min-width: 769px)').matches) return;
+    video.__heroMounted = true;
+    video.src = video.dataset.src;
+    var attempt = video.play();
+    // Autoplay can still be refused (Low Power Mode, a browser setting) and
+    // Safari does not decode VP9 alpha at all. Both leave the layer blank
+    // over the painted grass in the illustration, so no fallback is needed.
+    if (attempt && attempt.catch) attempt.catch(function () {});
+  }
+
+  function heroOnScreen() {
+    var hero = document.getElementById('home');
+    if (!hero) return false;
+    var rect = hero.getBoundingClientRect();
+    return rect.bottom > 0 && rect.top < window.innerHeight;
+  }
+
+  function schedule(delay) {
+    clearTimeout(timer);
+    timer = setTimeout(fly, delay);
+  }
+
+  function fly() {
+    var plane = document.querySelector('[data-hero-plane]');
+    if (!plane || !plane.animate) { schedule(GAP_MIN_MS); return; }
+    // Skip the traversal when nobody can see it, and check back sooner.
+    if (document.hidden || !heroOnScreen()) { schedule(15000); return; }
+    plane.animate([
+      { transform: 'translate3d(0,0,0)', opacity: 0 },
+      { transform: 'translate3d(-9vw,-0.6vh,0)', opacity: 0.92, offset: 0.07 },
+      { transform: 'translate3d(-115vw,-8.1vh,0)', opacity: 0.92, offset: 0.9 },
+      { transform: 'translate3d(-128vw,-9vh,0)', opacity: 0 }
+    ], { duration: FLIGHT_MS, easing: 'cubic-bezier(.36,.05,.62,1)', fill: 'both' });
+    schedule(FLIGHT_MS + GAP_MIN_MS + Math.random() * GAP_RANGE_MS);
+  }
+
+  function start() {
+    mountGrass();
+    schedule(2400);
+  }
+
+  // Waiting for `load` puts the first mount after the host's initial
+  // re-render, so the source is attached to the node that survives.
+  if (document.readyState === 'complete') {
+    start();
+  } else {
+    window.addEventListener('load', start, { once: true });
+  }
+  // The host renders the hero client-side and may swap #home wholesale, in
+  // which case the mounted <video> is replaced by a fresh, unmounted one.
+  new MutationObserver(mountGrass).observe(document.documentElement, {
+    childList: true, subtree: true
+  });
+  window.addEventListener('resize', mountGrass, { passive: true });
+})();
+</script>
 </body>
 </html>

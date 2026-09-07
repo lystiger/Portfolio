@@ -575,8 +575,11 @@ class Component extends DCLogic {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
   var FLIGHT_MS = 11000;
-  var GAP_MIN_MS = 46000;
-  var GAP_RANGE_MS = 72000;
+  // Start-to-start is FLIGHT_MS + GAP: a plane every 21-43s, on screen for
+  // 11s of that. Frequent enough to catch on a short visit, still uneven
+  // enough that it does not read as a loop.
+  var GAP_MIN_MS = 10000;
+  var GAP_RANGE_MS = 22000;
   var timer = 0;
 
   function mountGrass() {

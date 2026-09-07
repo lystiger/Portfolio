@@ -68,7 +68,8 @@ export const Aircraft: React.FC<AircraftProps> = ({
     let rotZ = 0;
 
     if (scrollProgress > 0.002) {
-      const t = Math.min(1, Math.max(0, scrollProgress));
+      const progress = Math.min(1, Math.max(0, scrollProgress));
+      const t = progress * progress * progress;
       currentTHead = tRest + t * (1.0 - tRest);
       // Subtle bank angle (up to ~5 degrees)
       rotZ = -t * 0.08;

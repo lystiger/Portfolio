@@ -41,7 +41,7 @@ export const HeroWorld: React.FC<HeroSceneProps> = ({ isReducedMotion = false })
   const bgPosY = (-viewport.height + bgHeight) / 2;
 
   // Foreground grass strip along the bottom edge
-  const grassH = Math.max(0.40, viewport.height * 0.08);
+  const grassH = Math.min(0.64, Math.max(0.40, viewport.height * 0.06));
   const grassW = viewport.width * 1.15;
   const grassY = -viewport.height / 2 + grassH / 2 - 0.02;
 

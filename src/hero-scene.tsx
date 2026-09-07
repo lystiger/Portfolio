@@ -18,10 +18,17 @@ export const HeroApp: React.FC = () => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     setIsReducedMotion(reduced);
 
+    let setupFrame = 0;
+    let settleFrame = 0;
+    let verificationTimer = 0;
+    let timeline: gsap.core.Timeline | null = null;
+    let pinnedHero: HTMLElement | null = null;
+    let heroObserver: MutationObserver | null = null;
+
     const setupScene = () => {
       const heroSection = document.getElementById('home');
       if (!heroSection) {
-        requestAnimationFrame(setupScene);
+        settleFrame = requestAnimationFrame(setupScene);
         return;
       }
 
@@ -36,7 +43,7 @@ export const HeroApp: React.FC = () => {
       );
       const navLinks = document.querySelectorAll('header nav a');
 
-      const tl = gsap.timeline({
+      timeline = gsap.timeline({
         scrollTrigger: {
           trigger: heroSection,
           start: 'top top',
@@ -68,15 +75,53 @@ export const HeroApp: React.FC = () => {
         ease: 'power1.out'
       }, 0.1);
 
-      return () => {
-        tl.scrollTrigger?.kill();
-        tl.kill();
-      };
+      pinnedHero = heroSection;
+
     };
 
-    const cleanup = setupScene();
+    heroObserver = new MutationObserver(() => {
+      if (reduced || !pinnedHero) return;
+      const currentHero = document.getElementById('home');
+      if (currentHero && currentHero !== pinnedHero) {
+        const staleTimeline = timeline;
+        timeline = null;
+        pinnedHero = null;
+        staleTimeline?.scrollTrigger?.kill();
+        staleTimeline?.kill();
+        cancelAnimationFrame(settleFrame);
+        settleFrame = requestAnimationFrame(setupScene);
+      }
+    });
+    heroObserver.observe(document.body, { childList: true, subtree: true });
+
+    // The host component can finish hydrating just after this module mounts.
+    // Wait for two paint frames so ScrollTrigger pins the settled hero node.
+    setupFrame = requestAnimationFrame(() => {
+      settleFrame = requestAnimationFrame(setupScene);
+    });
+
+    // Recover if a late host render replaced the pinned hero after setup.
+    verificationTimer = window.setTimeout(() => {
+      if (reduced) return;
+      const heroSection = document.getElementById('home');
+      if (heroSection && !heroSection.parentElement?.classList.contains('pin-spacer')) {
+        const staleTimeline = timeline;
+        timeline = null;
+        pinnedHero = null;
+        staleTimeline?.scrollTrigger?.kill();
+        staleTimeline?.kill();
+        cancelAnimationFrame(settleFrame);
+        setupScene();
+      }
+    }, 600);
+
     return () => {
-      if (typeof cleanup === 'function') cleanup();
+      cancelAnimationFrame(setupFrame);
+      cancelAnimationFrame(settleFrame);
+      clearTimeout(verificationTimer);
+      heroObserver?.disconnect();
+      timeline?.scrollTrigger?.kill();
+      timeline?.kill();
     };
   }, []);
 
@@ -116,4 +161,3 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
-

@@ -65,7 +65,8 @@ export const Contrail: React.FC<ContrailProps> = ({
     let currentTTail = tCloud;
 
     if (scrollProgress > 0.002) {
-      const t = Math.min(1, Math.max(0, scrollProgress));
+      const progress = Math.min(1, Math.max(0, scrollProgress));
+      const t = progress * progress * progress;
       currentTHead = tRest + t * (1.0 - tRest);
       currentTTail = Math.max(tCloud, currentTHead - 0.24);
     } else if (!isReducedMotion) {

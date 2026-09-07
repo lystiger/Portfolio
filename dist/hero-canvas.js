@@ -35499,8 +35499,10 @@ var ID = { progress: 0 }, LD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r,
 	return A_((d) => {
 		if (!s.current) return;
 		let f = d.clock.getElapsedTime(), p = a ? 0 : ID.progress, m = c, h = l;
-		if (p > .002) m = c + Math.min(1, Math.max(0, p)) * .6666666666666667, h = Math.max(l, m - .24);
-		else if (!a) {
+		if (p > .002) {
+			let e = Math.min(1, Math.max(0, p)), t = e * e * e;
+			m = c + t * .6666666666666667, h = Math.max(l, m - .24);
+		} else if (!a) {
 			let e = Math.sin(f * .45) * .003;
 			m = c + e;
 		}
@@ -35544,8 +35546,8 @@ var ID = { progress: 0 }, LD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r,
 		i || RD.sample(s);
 		let c = i ? 0 : ID.progress, p = f, m = 0;
 		if (c > .002) {
-			let e = Math.min(1, Math.max(0, c));
-			p = f + e * .6666666666666667, m = -e * .08;
+			let e = Math.min(1, Math.max(0, c)), t = e * e * e;
+			p = f + t * .6666666666666667, m = -t * .08;
 		} else if (!i) {
 			let e = Math.sin(s * .45) * .003;
 			p = f + e, m = Math.sin(s * .5) * .015;
@@ -35600,7 +35602,7 @@ function BD() {
 //#region src/components/hero/HeroScene.tsx
 var VD = ({ isReducedMotion: e = !1 }) => {
 	typeof window < "u" && (window.__HERO_WORLD_RENDERS__ = (window.__HERO_WORLD_RENDERS__ || 0) + 1);
-	let { viewport: t, camera: n } = k_(), { target: r } = BD(), i = P_(du, "assets/hero-bg-clean.webp"), a = P_(du, "assets/layer-character-full.png"), o = P_(du, "assets/grass-tile.png"), s = (0, v.useRef)(null), c = (0, v.useRef)(null), l = (0, v.useRef)(null), u = t.width / t.height > 1376 / 768 ? t.width / 1376 : t.height / 768, d = 1376 * u, f = 768 * u, p = (t.width - d) / 2, m = (-t.height + f) / 2, h = Math.max(.4, t.height * .08), g = t.width * 1.15, _ = -t.height / 2 + h / 2 - .02, y = (0, v.useRef)({
+	let { viewport: t, camera: n } = k_(), { target: r } = BD(), i = P_(du, "assets/hero-bg-clean.webp"), a = P_(du, "assets/layer-character-full.png"), o = P_(du, "assets/grass-tile.png"), s = (0, v.useRef)(null), c = (0, v.useRef)(null), l = (0, v.useRef)(null), u = t.width / t.height > 1376 / 768 ? t.width / 1376 : t.height / 768, d = 1376 * u, f = 768 * u, p = (t.width - d) / 2, m = (-t.height + f) / 2, h = Math.min(.64, Math.max(.4, t.height * .06)), g = t.width * 1.15, _ = -t.height / 2 + h / 2 - .02, y = (0, v.useRef)({
 		x: 0,
 		y: 0
 	});
@@ -35686,14 +35688,15 @@ var HD = () => {
 	return (0, v.useEffect)(() => {
 		let e = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 		t(e);
-		let n = () => {
+		let n = 0, r = 0, i = 0, a = null, o = null, s = null, c = () => {
 			let t = document.getElementById("home");
 			if (!t) {
-				requestAnimationFrame(n);
+				r = requestAnimationFrame(c);
 				return;
 			}
 			if (document.body.classList.add("has-webgl"), t.classList.add("webgl-active"), e) return;
-			let r = t.querySelectorAll("h1, p, a, img[src*=\"calligraphy\"], div[style*=\"writing-mode\"]"), i = document.querySelectorAll("header nav a"), a = cw.timeline({ scrollTrigger: {
+			let n = t.querySelectorAll("h1, p, a, img[src*=\"calligraphy\"], div[style*=\"writing-mode\"]"), i = document.querySelectorAll("header nav a");
+			a = cw.timeline({ scrollTrigger: {
 				trigger: t,
 				start: "top top",
 				end: "+=100%",
@@ -35706,18 +35709,34 @@ var HD = () => {
 						e.progress > .65 ? (t.style.opacity = "0.45", n.style.opacity = "1.0") : (t.style.opacity = "1.0", n.style.opacity = "0.62");
 					}
 				}
-			} }).to(r, {
+			} }).to(n, {
 				opacity: 0,
 				y: -35,
 				stagger: .02,
 				ease: "power1.out"
-			}, .1);
-			return () => {
-				a.scrollTrigger?.kill(), a.kill();
-			};
-		}, r = n();
-		return () => {
-			typeof r == "function" && r();
+			}, .1), o = t;
+		};
+		return s = new MutationObserver(() => {
+			if (e || !o) return;
+			let t = document.getElementById("home");
+			if (t && t !== o) {
+				let e = a;
+				a = null, o = null, e?.scrollTrigger?.kill(), e?.kill(), cancelAnimationFrame(r), r = requestAnimationFrame(c);
+			}
+		}), s.observe(document.body, {
+			childList: !0,
+			subtree: !0
+		}), n = requestAnimationFrame(() => {
+			r = requestAnimationFrame(c);
+		}), i = window.setTimeout(() => {
+			if (e) return;
+			let t = document.getElementById("home");
+			if (t && !t.parentElement?.classList.contains("pin-spacer")) {
+				let e = a;
+				a = null, o = null, e?.scrollTrigger?.kill(), e?.kill(), cancelAnimationFrame(r), c();
+			}
+		}, 600), () => {
+			cancelAnimationFrame(n), cancelAnimationFrame(r), clearTimeout(i), s?.disconnect(), a?.scrollTrigger?.kill(), a?.kill();
 		};
 	}, []), /* @__PURE__ */ (0, Ng.jsx)(ey, {
 		orthographic: !0,

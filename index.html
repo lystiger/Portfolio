@@ -615,9 +615,86 @@ class Component extends DCLogic {
     schedule(FLIGHT_MS + GAP_MIN_MS + Math.random() * GAP_RANGE_MS);
   }
 
+  /* Hero copy fade.
+     Replaces the scrubbed GSAP timeline the WebGL bundle used to run: the
+     headline, body, calligraphy and vertical title lift and dissolve as the
+     hero scrolls away, each element a beat behind the one before it. Purely
+     a function of scroll position, so scrolling back up restores it, and
+     re-applied on every frame, which also repairs the styles if the host
+     re-renders mid-scroll. */
+  var FADE_SPAN = 0.62;   // copy is gone this far through the hero
+  var FADE_STAGGER = 0.03;
+  var FADE_LIFT_PX = 35;
+  var copyEls = null;
+  var lastProgress = -1;
+  var fadeQueued = false;
+
+  function collectCopy() {
+    var hero = document.getElementById('home');
+    copyEls = hero ? Array.prototype.slice.call(hero.querySelectorAll(
+      'h1, p, a, img[src*="calligraphy"], div[style*="writing-mode"]'
+    )) : null;
+  }
+
+  /* The calligraphy and the vertical title are authored at 0.82 and 0.9
+     opacity, so the fade has to scale each element from its own resting
+     value rather than drive everything from 1. Cached on the node itself:
+     re-reading it after a fade would capture a faded value, and a node the
+     host has replaced arrives pristine with no cache. */
+  function baseOpacity(el) {
+    if (el.__heroBaseOpacity === undefined) {
+      var v = parseFloat(window.getComputedStyle(el).opacity);
+      el.__heroBaseOpacity = isNaN(v) ? 1 : v;
+    }
+    return el.__heroBaseOpacity;
+  }
+
+  function applyFade() {
+    fadeQueued = false;
+    var hero = document.getElementById('home');
+    if (!hero) return;
+    if (!copyEls || !copyEls.length || !copyEls[0].isConnected) collectCopy();
+    if (!copyEls || !copyEls.length) return;
+
+    var progress = Math.min(1, Math.max(0, window.scrollY / (hero.offsetHeight || window.innerHeight)));
+    if (progress === lastProgress) return;
+    lastProgress = progress;
+
+    for (var i = 0; i < copyEls.length; i++) {
+      var t = Math.min(1, Math.max(0, (progress - i * FADE_STAGGER) / FADE_SPAN));
+      var eased = 1 - (1 - t) * (1 - t);  // power1.out, as the old timeline used
+      var el = copyEls[i];
+      // Note `el.style.opacity = ''` is not the way back to rest: the author's
+      // opacity lives in that same inline declaration, so clearing it loses
+      // the value. Write the baseline back instead.
+      el.style.opacity = (baseOpacity(el) * (1 - eased)).toFixed(3);
+      if (!eased) {
+        el.style.transform = '';
+        el.style.pointerEvents = '';
+        continue;
+      }
+      el.style.transform = 'translate3d(0,' + (-FADE_LIFT_PX * eased).toFixed(2) + 'px,0)';
+      // Stop faded links from swallowing clicks meant for the section below.
+      el.style.pointerEvents = eased > 0.6 ? 'none' : '';
+    }
+  }
+
+  function queueFade() {
+    if (fadeQueued) return;
+    fadeQueued = true;
+    requestAnimationFrame(applyFade);
+  }
+
+  function onHostRender() {
+    mountGrass();
+    lastProgress = -1;  // force a re-apply onto the fresh nodes
+    queueFade();
+  }
+
   function start() {
     mountGrass();
     schedule(2400);
+    queueFade();
   }
 
   // Waiting for `load` puts the first mount after the host's initial
@@ -628,11 +705,17 @@ class Component extends DCLogic {
     window.addEventListener('load', start, { once: true });
   }
   // The host renders the hero client-side and may swap #home wholesale, in
-  // which case the mounted <video> is replaced by a fresh, unmounted one.
-  new MutationObserver(mountGrass).observe(document.documentElement, {
+  // which case the mounted <video> is replaced by a fresh, unmounted one and
+  // the faded copy is replaced by pristine markup.
+  new MutationObserver(onHostRender).observe(document.documentElement, {
     childList: true, subtree: true
   });
-  window.addEventListener('resize', mountGrass, { passive: true });
+  window.addEventListener('scroll', queueFade, { passive: true });
+  window.addEventListener('resize', function () {
+    mountGrass();
+    lastProgress = -1;
+    queueFade();
+  }, { passive: true });
 })();
 </script>
 </body>

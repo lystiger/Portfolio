@@ -40,14 +40,27 @@ a:hover { color:#5d7247; }
   object-position: bottom center;
   pointer-events: none;
   z-index: 2;
+}
+/* The fade is applied to a wrapper, never to the <video> itself. A mask on
+   a video element is dropped by some GPU compositors — the media decodes
+   and plays but paints nothing — while the identical mask on a wrapper (or
+   on an <img>) composites correctly. */
+.grass-mask {
   -webkit-mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.8) 30%, #000 64%);
           mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.8) 30%, #000 64%);
+}
+.grass-mask > video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: bottom center;
 }
 /* The video carries the per-blade motion; the still underneath is what
    shows on mobile, in reduced motion, and wherever VP9 alpha will not
    decode. The old CSS skew is gone: a 0.45deg shear across a 1455px-wide
    element moved the blades by a fraction of a pixel. */
-.horizon-grass-video { z-index: 3; }
+.horizon-grass-video { z-index: 3; overflow: hidden; }
 
 /* ── Hero layered media ─────────────────────────────────────────────
    #home stacks four decorative layers below the HTML copy:
@@ -91,12 +104,16 @@ a:hover { color:#5d7247; }
 .hero-grass {
   position:absolute; left:0; right:0; bottom:-1px; z-index:4;
   width:100%; height:clamp(60px,8vh,104px);
-  object-fit:cover; object-position:bottom center;
-  pointer-events:none;
+  pointer-events:none; overflow:hidden;
   /* Fade the top of the band so it grows out of the painted meadow rather
-     than sitting on it as a strip with a visible upper edge. */
+     than sitting on it as a strip with a visible upper edge. Carried by the
+     wrapper, not the video — see .grass-mask. */
   -webkit-mask-image:linear-gradient(180deg,transparent 0,rgba(0,0,0,.8) 34%,#000 68%);
           mask-image:linear-gradient(180deg,transparent 0,rgba(0,0,0,.8) 34%,#000 68%);
+}
+.hero-grass > video {
+  display:block; width:100%; height:100%;
+  object-fit:cover; object-position:bottom center;
 }
 
 /* Mobile: reframe the landscape illustration so the figure is centred
@@ -203,7 +220,7 @@ a:hover { color:#5d7247; }
       <source media="(prefers-reduced-motion: reduce)" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" />
       <img class="hero-character" src="assets/layer-character-full.png" alt="" width="1376" height="768" decoding="async" />
     </picture>
-    <video class="hero-grass" data-grass-loop data-src="assets/hero-grass-loop.webm" width="1920" height="266" muted loop playsinline autoplay preload="none" disablepictureinpicture aria-hidden="true"></video>
+    <div class="hero-grass" aria-hidden="true"><video data-grass-loop data-src="assets/hero-grass-loop.webm" width="1920" height="266" muted loop playsinline autoplay preload="none" disablepictureinpicture></video></div>
   </div>
 
   <div aria-hidden="true" style="position:absolute;right:clamp(12px,1.6vw,30px);top:14%;z-index:4;writing-mode:vertical-rl;font-family:'Noto Serif JP',serif;font-weight:300;font-size:clamp(20px,2.1vw,32px);letter-spacing:.18em;color:#25313c;opacity:.9;line-height:1">風立ちぬ<span style="display:inline-block;width:1px;height:30px;background:#3d4b57;margin:14px 0"></span><span style="font-size:.42em;letter-spacing:.34em">生きねば</span></div>
@@ -438,7 +455,7 @@ a:hover { color:#5d7247; }
     <div class="cloud" style="position:absolute;top:40%;left:0;width:340px;height:120px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.62),rgba(255,255,255,0));filter:blur(20px);animation:drift 340s linear infinite;animation-delay:-210s"></div>
   </div>
   <img src="assets/horizon-grass.png" class="horizon-grass" alt="" aria-hidden="true" loading="lazy" decoding="async" />
-  <video class="horizon-grass-video" data-grass-loop data-src="assets/hero-grass-loop.webm" width="1920" height="266" muted loop playsinline autoplay preload="none" disablepictureinpicture aria-hidden="true"></video>
+  <div class="horizon-grass-video grass-mask" aria-hidden="true"><video data-grass-loop data-src="assets/hero-grass-loop.webm" width="1920" height="266" muted loop playsinline autoplay preload="none" disablepictureinpicture></video></div>
   <div aria-hidden="true" style="position:absolute;inset:0;z-index:3;pointer-events:none;background-image:var(--grain);background-size:160px 160px;opacity:.07;mix-blend-mode:overlay"></div>
 
   <div style="position:relative;z-index:4;max-width:1180px;margin:0 auto;width:100%;padding:clamp(70px,9vw,120px) clamp(22px,6vw,64px) clamp(90px,11vw,150px)">

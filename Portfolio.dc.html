@@ -24,28 +24,30 @@ a:hover { color:#5d7247; }
 @keyframes drift { from { transform:translate3d(-34vw,0,0); } to { transform:translate3d(132vw,0,0); } }
 @keyframes fadeup { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
 @keyframes draw { from { stroke-dashoffset:1; } to { stroke-dashoffset:0; } }
-@keyframes horizonGrassSway {
-  0%, 100% {
-    transform: scaleX(1.01) skewX(-0.25deg) rotate(-0.1deg);
-  }
-  50% {
-    transform: scaleX(1.01) skewX(0.45deg) rotate(0.15deg);
-  }
-}
-.horizon-grass {
+/* Closing grass band. The plate is 2172x724 drawn full-bleed, so `cover`
+   scales it by width and a fixed pixel height then crops a shrinking slice
+   of it as the viewport widens: readable at 390px, but by 1440px only the
+   root mass survives and the band ends in a straight guillotined line.
+   Height therefore tracks viewport width, and the top edge is masked so
+   blades dissolve into the sky instead of being cut off. */
+.horizon-grass, .horizon-grass-video {
   position: absolute;
   left: 0;
   bottom: -1px;
   width: 100%;
-  height: clamp(52px, 8.5vh, 78px);
+  height: clamp(58px, 7.5vw, 150px);
   object-fit: cover;
   object-position: bottom center;
-  transform-origin: bottom center;
-  animation: horizonGrassSway 8s ease-in-out infinite;
   pointer-events: none;
   z-index: 2;
-  will-change: transform;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.8) 30%, #000 64%);
+          mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.8) 30%, #000 64%);
 }
+/* The video carries the per-blade motion; the still underneath is what
+   shows on mobile, in reduced motion, and wherever VP9 alpha will not
+   decode. The old CSS skew is gone: a 0.45deg shear across a 1455px-wide
+   element moved the blades by a fraction of a pixel. */
+.horizon-grass-video { z-index: 3; }
 
 /* ── Hero layered media ─────────────────────────────────────────────
    #home stacks four decorative layers below the HTML copy:
@@ -126,7 +128,7 @@ a:hover { color:#5d7247; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior:auto; }
   *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
-  .horizon-grass { animation: none !important; transform: none !important; }
+  .horizon-grass-video { display:none !important; }
   /* The still served by <picture> already contains the figure and the
      airplane, so the moving plates are removed rather than frozen. */
   .hero-character, .hero-plane, .hero-grass { display:none !important; }
@@ -201,7 +203,7 @@ a:hover { color:#5d7247; }
       <source media="(prefers-reduced-motion: reduce)" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" />
       <img class="hero-character" src="assets/layer-character-full.png" alt="" width="1376" height="768" decoding="async" />
     </picture>
-    <video class="hero-grass" data-hero-grass data-src="assets/hero-grass-loop.webm" width="1920" height="266" muted loop playsinline autoplay preload="none" disablepictureinpicture aria-hidden="true"></video>
+    <video class="hero-grass" data-grass-loop data-src="assets/hero-grass-loop.webm" width="1920" height="266" muted loop playsinline autoplay preload="none" disablepictureinpicture aria-hidden="true"></video>
   </div>
 
   <div aria-hidden="true" style="position:absolute;right:clamp(12px,1.6vw,30px);top:14%;z-index:4;writing-mode:vertical-rl;font-family:'Noto Serif JP',serif;font-weight:300;font-size:clamp(20px,2.1vw,32px);letter-spacing:.18em;color:#25313c;opacity:.9;line-height:1">風立ちぬ<span style="display:inline-block;width:1px;height:30px;background:#3d4b57;margin:14px 0"></span><span style="font-size:.42em;letter-spacing:.34em">生きねば</span></div>
@@ -436,6 +438,7 @@ a:hover { color:#5d7247; }
     <div class="cloud" style="position:absolute;top:40%;left:0;width:340px;height:120px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.62),rgba(255,255,255,0));filter:blur(20px);animation:drift 340s linear infinite;animation-delay:-210s"></div>
   </div>
   <img src="assets/horizon-grass.png" class="horizon-grass" alt="" aria-hidden="true" loading="lazy" decoding="async" />
+  <video class="horizon-grass-video" data-grass-loop data-src="assets/hero-grass-loop.webm" width="1920" height="266" muted loop playsinline autoplay preload="none" disablepictureinpicture aria-hidden="true"></video>
   <div aria-hidden="true" style="position:absolute;inset:0;z-index:3;pointer-events:none;background-image:var(--grain);background-size:160px 160px;opacity:.07;mix-blend-mode:overlay"></div>
 
   <div style="position:relative;z-index:4;max-width:1180px;margin:0 auto;width:100%;padding:clamp(70px,9vw,120px) clamp(22px,6vw,64px) clamp(90px,11vw,150px)">
@@ -577,16 +580,21 @@ class Component extends DCLogic {
   var timer = 0;
 
   function mountGrass() {
-    var video = document.querySelector('[data-hero-grass]');
-    if (!video || video.__heroMounted) return;
     if (!window.matchMedia('(min-width: 769px)').matches) return;
-    video.__heroMounted = true;
-    video.src = video.dataset.src;
-    var attempt = video.play();
-    // Autoplay can still be refused (Low Power Mode, a browser setting) and
-    // Safari does not decode VP9 alpha at all. Both leave the layer blank
-    // over the painted grass in the illustration, so no fallback is needed.
-    if (attempt && attempt.catch) attempt.catch(function () {});
+    // Both bands share one file, so the second element is a cache hit.
+    var videos = document.querySelectorAll('[data-grass-loop]');
+    for (var i = 0; i < videos.length; i++) {
+      var video = videos[i];
+      if (video.__heroMounted) continue;
+      video.__heroMounted = true;
+      video.src = video.dataset.src;
+      var attempt = video.play();
+      // Autoplay can still be refused (Low Power Mode, a browser setting) and
+      // Safari does not decode VP9 alpha at all. Both leave the layer blank
+      // over grass that is already painted underneath, so no fallback beyond
+      // the still is needed.
+      if (attempt && attempt.catch) attempt.catch(function () {});
+    }
   }
 
   function heroOnScreen() {

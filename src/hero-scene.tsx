@@ -5,6 +5,8 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { HeroWorld } from './components/hero/HeroScene';
 import { scrollMotionState } from './components/hero/motionState';
+import { activityState } from './components/hero/activityState';
+import { RenderLoopOptimizer } from './components/hero/RenderLoopOptimizer';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -48,6 +50,7 @@ export const HeroApp: React.FC = () => {
           pinSpacing: true,
           scrub: 0.8,
           onUpdate: (self) => {
+            activityState.markInteraction();
             scrollMotionState.progress = self.progress;
 
             if (navLinks.length >= 2) {
@@ -123,9 +126,10 @@ export const HeroApp: React.FC = () => {
 
   return (
     <Canvas
+      frameloop="demand"
       orthographic
       camera={{ position: [0, 0, 10], zoom: 100 }}
-      gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+      gl={{ antialias: true, alpha: true, powerPreference: 'default' }}
       style={{
         position: 'fixed',
         inset: 0,
@@ -136,6 +140,7 @@ export const HeroApp: React.FC = () => {
       }}
     >
       <HeroWorld isReducedMotion={isReducedMotion} />
+      <RenderLoopOptimizer isReducedMotion={isReducedMotion} />
     </Canvas>
   );
 };

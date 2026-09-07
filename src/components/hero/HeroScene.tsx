@@ -84,8 +84,13 @@ export const HeroWorld: React.FC<HeroSceneProps> = ({ isReducedMotion = false })
     // Camera subtle depth push on scroll (max ~5% zoom)
     if (camera instanceof THREE.OrthographicCamera) {
       const zoomTarget = 100 * (1 + scrollProgress * 0.05);
-      camera.zoom = THREE.MathUtils.lerp(camera.zoom, zoomTarget, 0.1);
-      camera.updateProjectionMatrix();
+      if (Math.abs(camera.zoom - zoomTarget) > 0.001) {
+        camera.zoom = THREE.MathUtils.lerp(camera.zoom, zoomTarget, 0.1);
+        if (Math.abs(camera.zoom - zoomTarget) <= 0.001) {
+          camera.zoom = zoomTarget;
+        }
+        camera.updateProjectionMatrix();
+      }
     }
 
     // Layer 1: Base Sky / Landscape (Z = -8, 0 to 1.5px parallax)

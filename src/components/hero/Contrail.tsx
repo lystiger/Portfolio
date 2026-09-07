@@ -25,6 +25,9 @@ export const Contrail: React.FC<ContrailProps> = ({
   historyLength = 55
 }) => {
   const meshRef = React.useRef<THREE.Mesh>(null);
+  const lastContrailTime = React.useRef(-1);
+  const lastScrollProgress = React.useRef(-1);
+  const CONTRAIL_INTERVAL = 1 / 25; // ~25 Hz update rate for procedural geometry (Requirement 8)
 
   const { geometry, material } = useMemo(() => {
     const geo = new THREE.BufferGeometry();
@@ -63,6 +66,19 @@ export const Contrail: React.FC<ContrailProps> = ({
     const flight = getFlightState(time, scrollProgress, isReducedMotion);
 
     material.opacity = flight.opacity;
+
+    // Throttle procedural geometry calculation and GPU buffer upload to ~25 Hz
+    const isFirstRun = lastContrailTime.current < 0;
+    const timeElapsed = time - lastContrailTime.current;
+    const progressChanged = Math.abs(scrollProgress - lastScrollProgress.current) > 0.0005;
+
+    if (!isFirstRun && timeElapsed < CONTRAIL_INTERVAL && !progressChanged) {
+      return;
+    }
+
+    lastContrailTime.current = time;
+    lastScrollProgress.current = scrollProgress;
+
     const currentTHead = flight.tHead;
     const currentTTail = flight.tTail;
 

@@ -35510,7 +35510,7 @@ function zD(e, t, n) {
 //#endregion
 //#region src/components/hero/Contrail.tsx
 var BD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, tailSpline: i, isReducedMotion: a = !1, historyLength: o = 55 }) => {
-	let s = v.useRef(null), { geometry: c, material: l } = (0, v.useMemo)(() => {
+	let s = v.useRef(null), c = v.useRef(-1), l = v.useRef(-1), { geometry: u, material: d } = (0, v.useMemo)(() => {
 		let e = new Wi(), t = new Float32Array(o * 2 * 3), n = new Float32Array(o * 2 * 4), r = [];
 		for (let e = 0; e < o - 1; e++) {
 			let t = e * 2, n = e * 2 + 1, i = (e + 1) * 2, a = (e + 1) * 2 + 1;
@@ -35526,26 +35526,29 @@ var BD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, tailSpline: i, isRedu
 			})
 		};
 	}, [o]);
-	return A_((u) => {
+	return A_((f) => {
 		if (!s.current) return;
-		let d = zD(u.clock.getElapsedTime(), a ? 0 : ID.progress, a);
-		l.opacity = d.opacity;
-		let f = d.tHead, p = d.tTail, m = c.attributes.position, h = c.attributes.color, g = m.array, _ = h.array, v = [];
+		let p = f.clock.getElapsedTime(), m = a ? 0 : ID.progress, h = zD(p, m, a);
+		d.opacity = h.opacity;
+		let g = c.current < 0, _ = p - c.current, v = Math.abs(m - l.current) > 5e-4;
+		if (!g && _ < .04 && !v) return;
+		c.current = p, l.current = m;
+		let y = h.tHead, b = h.tTail, x = u.attributes.position, S = u.attributes.color, C = x.array, w = S.array, T = [];
 		for (let a = 0; a < o; a++) {
-			let s = a / (o - 1), c = kn.lerp(f, p, s), l = i.getPoint(Math.min(1, Math.max(0, c)));
-			v.push(new Y(e + l.x * n, t + l.y * r, -3.01));
+			let s = a / (o - 1), c = kn.lerp(y, b, s), l = i.getPoint(Math.min(1, Math.max(0, c)));
+			T.push(new Y(e + l.x * n, t + l.y * r, -3.01));
 		}
 		for (let e = 0; e < o; e++) {
-			let t = v[e], n = v[Math.min(e + 1, o - 1)], r = n.x - t.x, i = n.y - t.y, a = Math.sqrt(r * r + i * i) || 1, s = -i / a, c = r / a, l = e / (o - 1), u = .014 + l * .024, d = Math.max(0, (1 - l * .82) * .88), f = e * 6;
-			g[f] = t.x + s * u, g[f + 1] = t.y + c * u, g[f + 2] = t.z, g[f + 3] = t.x - s * u, g[f + 4] = t.y - c * u, g[f + 5] = t.z;
+			let t = T[e], n = T[Math.min(e + 1, o - 1)], r = n.x - t.x, i = n.y - t.y, a = Math.sqrt(r * r + i * i) || 1, s = -i / a, c = r / a, l = e / (o - 1), u = .014 + l * .024, d = Math.max(0, (1 - l * .82) * .88), f = e * 6;
+			C[f] = t.x + s * u, C[f + 1] = t.y + c * u, C[f + 2] = t.z, C[f + 3] = t.x - s * u, C[f + 4] = t.y - c * u, C[f + 5] = t.z;
 			let p = e * 8;
-			_[p] = .98, _[p + 1] = .97, _[p + 2] = .95, _[p + 3] = d, _[p + 4] = .98, _[p + 5] = .97, _[p + 6] = .95, _[p + 7] = d;
+			w[p] = .98, w[p + 1] = .97, w[p + 2] = .95, w[p + 3] = d, w[p + 4] = .98, w[p + 5] = .97, w[p + 6] = .95, w[p + 7] = d;
 		}
-		m.needsUpdate = !0, h.needsUpdate = !0;
+		x.needsUpdate = !0, S.needsUpdate = !0;
 	}), /* @__PURE__ */ (0, Ng.jsx)("mesh", {
 		ref: s,
-		geometry: c,
-		material: l
+		geometry: u,
+		material: d
 	});
 }, VD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, isReducedMotion: i = !1 }) => {
 	let a = (0, v.useRef)(null), o = (0, v.useRef)(null), s = P_(du, "assets/plane.png"), c = 150 / 1376 * n, l = 62 / 768 * r, u = 45 / 150 * c, d = -.27419354838709675 * l, f = (0, v.useMemo)(() => new Rs([
@@ -35590,10 +35593,20 @@ var BD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, tailSpline: i, isRedu
 			gust: Math.max(0, Math.sin(e * .35 - .8)) * .4
 		};
 	}
+}, UD = {
+	lastInteractionTime: typeof performance < "u" ? performance.now() : 0,
+	isHeroVisible: !0,
+	isTabVisible: !0,
+	markInteraction() {
+		this.lastInteractionTime = typeof performance < "u" ? performance.now() : Date.now();
+	},
+	isInteractive() {
+		return (typeof performance < "u" ? performance.now() : Date.now()) - this.lastInteractionTime < 500;
+	}
 };
 //#endregion
 //#region src/hooks/usePointerParallax.ts
-function UD() {
+function WD() {
 	let e = (0, v.useRef)({
 		x: 0,
 		y: 0
@@ -35604,6 +35617,7 @@ function UD() {
 	return (0, v.useEffect)(() => {
 		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 		let e = (e) => {
+			UD.markInteraction();
 			let n = e.clientX / window.innerWidth * 2 - 1, r = -(e.clientY / window.innerHeight) * 2 + 1;
 			t.current.x = Math.max(-1, Math.min(1, n)), t.current.y = Math.max(-1, Math.min(1, r));
 		};
@@ -35615,9 +35629,9 @@ function UD() {
 }
 //#endregion
 //#region src/components/hero/HeroScene.tsx
-var WD = ({ isReducedMotion: e = !1 }) => {
+var GD = ({ isReducedMotion: e = !1 }) => {
 	typeof window < "u" && (window.__HERO_WORLD_RENDERS__ = (window.__HERO_WORLD_RENDERS__ || 0) + 1);
-	let { viewport: t, camera: n } = k_(), { target: r } = UD(), i = P_(du, "assets/hero-bg-clean.webp"), a = P_(du, "assets/layer-character-full.png"), o = P_(du, "assets/grass-tile.png"), s = (0, v.useRef)(null), c = (0, v.useRef)(null), l = (0, v.useRef)(null);
+	let { viewport: t, camera: n } = k_(), { target: r } = WD(), i = P_(du, "assets/hero-bg-clean.webp"), a = P_(du, "assets/layer-character-full.png"), o = P_(du, "assets/grass-tile.png"), s = (0, v.useRef)(null), c = (0, v.useRef)(null), l = (0, v.useRef)(null);
 	v.useEffect(() => {
 		document.body.classList.add("has-webgl");
 		let e = document.getElementById("home");
@@ -35636,7 +35650,7 @@ var WD = ({ isReducedMotion: e = !1 }) => {
 		let f = y.current.x, h = y.current.y;
 		if (n instanceof Au) {
 			let e = 100 * (1 + u * .05);
-			n.zoom = kn.lerp(n.zoom, e, .1), n.updateProjectionMatrix();
+			Math.abs(n.zoom - e) > .001 && (n.zoom = kn.lerp(n.zoom, e, .1), Math.abs(n.zoom - e) <= .001 && (n.zoom = e), n.updateProjectionMatrix());
 		}
 		if (s.current) {
 			let e = .012;
@@ -35699,11 +35713,53 @@ var WD = ({ isReducedMotion: e = !1 }) => {
 			})]
 		})
 	] });
+}, KD = ({ isReducedMotion: e = !1 }) => {
+	let { invalidate: t } = k_(), n = (0, v.useRef)(null), r = (0, v.useRef)(performance.now());
+	return (0, v.useEffect)(() => {
+		let i = document.getElementById("home"), a = null, o = () => {
+			if (i ||= document.getElementById("home"), !i) return !0;
+			let e = i.getBoundingClientRect();
+			return e.bottom > 0 && e.top < window.innerHeight;
+		}, s = (e) => {
+			UD.isHeroVisible = e, e && UD.isTabVisible && (t(), d());
+		};
+		typeof IntersectionObserver < "u" && (a = new IntersectionObserver((e) => {
+			let t = e[0], n = t.isIntersecting && t.intersectionRatio > 0 && o();
+			s(n);
+		}, { threshold: [
+			0,
+			.02,
+			.1
+		] }), i && a.observe(i));
+		let c = () => {
+			let e = document.visibilityState !== "hidden";
+			UD.isTabVisible = e, e && UD.isHeroVisible && (t(), d());
+		};
+		document.addEventListener("visibilitychange", c);
+		let l = () => {
+			UD.markInteraction();
+			let e = o();
+			e !== UD.isHeroVisible && (UD.isHeroVisible = e), UD.isHeroVisible && UD.isTabVisible && (t(), d());
+		};
+		window.addEventListener("pointermove", l, { passive: !0 }), window.addEventListener("wheel", l, { passive: !0 }), window.addEventListener("touchmove", l, { passive: !0 }), window.addEventListener("scroll", l, { passive: !0 });
+		let u = (i) => {
+			if (n.current = null, !UD.isTabVisible || !UD.isHeroVisible) return;
+			let a = UD.isInteractive();
+			if (e && !a) return;
+			let o = 1e3 / (a ? 60 : 36), s = i - r.current;
+			s >= o && (r.current = i - s % o, t()), n.current = requestAnimationFrame(u);
+		}, d = () => {
+			n.current === null && UD.isTabVisible && UD.isHeroVisible && (r.current = performance.now(), n.current = requestAnimationFrame(u));
+		};
+		return UD.isTabVisible = document.visibilityState !== "hidden", UD.isHeroVisible = o(), t(), d(), () => {
+			n.current !== null && (cancelAnimationFrame(n.current), n.current = null), a?.disconnect(), document.removeEventListener("visibilitychange", c), window.removeEventListener("pointermove", l), window.removeEventListener("wheel", l), window.removeEventListener("touchmove", l), window.removeEventListener("scroll", l);
+		};
+	}, [t, e]), null;
 };
 //#endregion
 //#region src/hero-scene.tsx
 cw.registerPlugin(ED);
-var GD = () => {
+var qD = () => {
 	typeof window < "u" && (window.__HERO_APP_RENDERS__ = (window.__HERO_APP_RENDERS__ || 0) + 1);
 	let [e, t] = (0, v.useState)(!1);
 	return (0, v.useEffect)(() => {
@@ -35725,7 +35781,7 @@ var GD = () => {
 				pinSpacing: !0,
 				scrub: .8,
 				onUpdate: (e) => {
-					if (ID.progress = e.progress, i.length >= 2) {
+					if (UD.markInteraction(), ID.progress = e.progress, i.length >= 2) {
 						let t = i[0], n = i[1];
 						e.progress > .65 ? (t.style.opacity = "0.45", n.style.opacity = "1.0") : (t.style.opacity = "1.0", n.style.opacity = "0.62");
 					}
@@ -35759,7 +35815,8 @@ var GD = () => {
 		}, 600), () => {
 			cancelAnimationFrame(n), cancelAnimationFrame(r), clearTimeout(i), s?.disconnect(), a?.scrollTrigger?.kill(), a?.kill();
 		};
-	}, []), /* @__PURE__ */ (0, Ng.jsx)(ey, {
+	}, []), /* @__PURE__ */ (0, Ng.jsxs)(ey, {
+		frameloop: "demand",
 		orthographic: !0,
 		camera: {
 			position: [
@@ -35772,7 +35829,7 @@ var GD = () => {
 		gl: {
 			antialias: !0,
 			alpha: !0,
-			powerPreference: "high-performance"
+			powerPreference: "default"
 		},
 		style: {
 			position: "fixed",
@@ -35782,13 +35839,13 @@ var GD = () => {
 			pointerEvents: "none",
 			zIndex: 0
 		},
-		children: /* @__PURE__ */ (0, Ng.jsx)(WD, { isReducedMotion: e })
+		children: [/* @__PURE__ */ (0, Ng.jsx)(GD, { isReducedMotion: e }), /* @__PURE__ */ (0, Ng.jsx)(KD, { isReducedMotion: e })]
 	});
 };
-function KD() {
+function JD() {
 	let e = document.getElementById("hero-scene-root"), t = document.getElementById("home");
-	e && t ? (console.log("[HeroScene] Mounting R3F canvas to #hero-scene-root (DOM ready)..."), (0, y.createRoot)(e).render(/* @__PURE__ */ (0, Ng.jsx)(GD, {}))) : setTimeout(KD, 30);
+	e && t ? (console.log("[HeroScene] Mounting R3F canvas to #hero-scene-root (DOM ready)..."), (0, y.createRoot)(e).render(/* @__PURE__ */ (0, Ng.jsx)(qD, {}))) : setTimeout(JD, 30);
 }
-document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", KD) : KD();
+document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", JD) : JD();
 //#endregion
-export { GD as HeroApp };
+export { qD as HeroApp };

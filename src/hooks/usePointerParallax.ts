@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { activityState } from '../components/hero/activityState';
 
 export interface PointerParallax {
   x: number; // normalized -1 to 1
@@ -15,6 +16,7 @@ export function usePointerParallax() {
     }
 
     const handlePointerMove = (e: PointerEvent) => {
+      activityState.markInteraction();
       const x = (e.clientX / window.innerWidth) * 2 - 1;
       const y = -(e.clientY / window.innerHeight) * 2 + 1;
       target.current.x = Math.max(-1, Math.min(1, x));

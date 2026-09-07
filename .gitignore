@@ -9,6 +9,7 @@ dist/*
 !dist/hero-canvas.js
 
 # Test outputs
+qa-results/
 e2e-*.png
 playwright-*.png
 test-*.png

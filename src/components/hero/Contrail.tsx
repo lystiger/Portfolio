@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { scrollMotionState } from './motionState';
 
 interface ContrailProps {
   bgPosX: number;
@@ -8,7 +9,6 @@ interface ContrailProps {
   bgWidth: number;
   bgHeight: number;
   tailSpline: THREE.CatmullRomCurve3;
-  scrollProgress: number;
   isReducedMotion?: boolean;
   historyLength?: number;
 }
@@ -19,7 +19,6 @@ export const Contrail: React.FC<ContrailProps> = ({
   bgWidth,
   bgHeight,
   tailSpline,
-  scrollProgress,
   isReducedMotion = false,
   historyLength = 55
 }) => {
@@ -61,6 +60,7 @@ export const Contrail: React.FC<ContrailProps> = ({
     if (!meshRef.current) return;
 
     const time = state.clock.getElapsedTime();
+    const scrollProgress = isReducedMotion ? 0 : scrollMotionState.progress;
     let currentTHead = tRest;
     let currentTTail = tCloud;
 

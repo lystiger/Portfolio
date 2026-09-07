@@ -3,14 +3,17 @@ import { useFrame, useThree, useLoader } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Aircraft } from './Aircraft';
 import { WindSystem } from './WindSystem';
+import { scrollMotionState } from './motionState';
 import { usePointerParallax } from '../../hooks/usePointerParallax';
 
 interface HeroSceneProps {
-  scrollProgress: number;
   isReducedMotion?: boolean;
 }
 
-export const HeroWorld: React.FC<HeroSceneProps> = ({ scrollProgress, isReducedMotion = false }) => {
+export const HeroWorld: React.FC<HeroSceneProps> = ({ isReducedMotion = false }) => {
+  if (typeof window !== 'undefined') {
+    (window as any).__HERO_WORLD_RENDERS__ = ((window as any).__HERO_WORLD_RENDERS__ || 0) + 1;
+  }
   const { viewport, camera } = useThree();
   const { target } = usePointerParallax();
 
@@ -47,6 +50,7 @@ export const HeroWorld: React.FC<HeroSceneProps> = ({ scrollProgress, isReducedM
   useFrame((state, delta) => {
     const time = state.clock.getElapsedTime();
     const wind = isReducedMotion ? { strength: 0, gust: 0 } : WindSystem.sample(time);
+    const scrollProgress = isReducedMotion ? 0 : scrollMotionState.progress;
 
     // Parallax dampens smoothly to 0 as scroll progress increases
     const parallaxDamp = isReducedMotion ? 0 : Math.max(0, 1 - scrollProgress * 1.8);
@@ -120,7 +124,6 @@ export const HeroWorld: React.FC<HeroSceneProps> = ({ scrollProgress, isReducedM
         bgPosY={bgPosY}
         bgWidth={bgWidth}
         bgHeight={bgHeight}
-        scrollProgress={scrollProgress}
         isReducedMotion={isReducedMotion}
       />
 

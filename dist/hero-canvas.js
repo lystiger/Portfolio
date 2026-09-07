@@ -35478,11 +35478,11 @@ ED.sort = function(e) {
 	}
 }, UT() && $.registerPlugin(ED);
 //#endregion
-//#region src/components/hero/Contrail.tsx
-var ID = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, tailSpline: i, scrollProgress: a, isReducedMotion: o = !1, historyLength: s = 55 }) => {
-	let c = v.useRef(null), l = 2 / 6, u = 1 / 6, { geometry: d, material: f } = (0, v.useMemo)(() => {
-		let e = new Wi(), t = new Float32Array(s * 2 * 3), n = new Float32Array(s * 2 * 4), r = [];
-		for (let e = 0; e < s - 1; e++) {
+//#region src/components/hero/motionState.ts
+var ID = { progress: 0 }, LD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, tailSpline: i, isReducedMotion: a = !1, historyLength: o = 55 }) => {
+	let s = v.useRef(null), c = 2 / 6, l = 1 / 6, { geometry: u, material: d } = (0, v.useMemo)(() => {
+		let e = new Wi(), t = new Float32Array(o * 2 * 3), n = new Float32Array(o * 2 * 4), r = [];
+		for (let e = 0; e < o - 1; e++) {
 			let t = e * 2, n = e * 2 + 1, i = (e + 1) * 2, a = (e + 1) * 2 + 1;
 			r.push(t, n, i), r.push(n, a, i);
 		}
@@ -35495,41 +35495,41 @@ var ID = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, tailSpline: i, scroll
 				side: 2
 			})
 		};
-	}, [s]);
-	return A_((f) => {
-		if (!c.current) return;
-		let p = f.clock.getElapsedTime(), m = l, h = u;
-		if (a > .002) m = l + Math.min(1, Math.max(0, a)) * .6666666666666667, h = Math.max(u, m - .24);
-		else if (!o) {
-			let e = Math.sin(p * .45) * .003;
-			m = l + e;
+	}, [o]);
+	return A_((d) => {
+		if (!s.current) return;
+		let f = d.clock.getElapsedTime(), p = a ? 0 : ID.progress, m = c, h = l;
+		if (p > .002) m = c + Math.min(1, Math.max(0, p)) * .6666666666666667, h = Math.max(l, m - .24);
+		else if (!a) {
+			let e = Math.sin(f * .45) * .003;
+			m = c + e;
 		}
-		let g = d.attributes.position, _ = d.attributes.color, v = g.array, y = _.array, b = [];
-		for (let a = 0; a < s; a++) {
-			let o = a / (s - 1), c = kn.lerp(m, h, o), l = i.getPoint(Math.min(1, Math.max(0, c)));
+		let g = u.attributes.position, _ = u.attributes.color, v = g.array, y = _.array, b = [];
+		for (let a = 0; a < o; a++) {
+			let s = a / (o - 1), c = kn.lerp(m, h, s), l = i.getPoint(Math.min(1, Math.max(0, c)));
 			b.push(new Y(e + l.x * n, t + l.y * r, -3.01));
 		}
-		for (let e = 0; e < s; e++) {
-			let t = b[e], n = b[Math.min(e + 1, s - 1)], r = n.x - t.x, i = n.y - t.y, a = Math.sqrt(r * r + i * i) || 1, o = -i / a, c = r / a, l = e / (s - 1), u = .014 + l * .024, d = Math.max(0, (1 - l * .82) * .88), f = e * 6;
-			v[f] = t.x + o * u, v[f + 1] = t.y + c * u, v[f + 2] = t.z, v[f + 3] = t.x - o * u, v[f + 4] = t.y - c * u, v[f + 5] = t.z;
+		for (let e = 0; e < o; e++) {
+			let t = b[e], n = b[Math.min(e + 1, o - 1)], r = n.x - t.x, i = n.y - t.y, a = Math.sqrt(r * r + i * i) || 1, s = -i / a, c = r / a, l = e / (o - 1), u = .014 + l * .024, d = Math.max(0, (1 - l * .82) * .88), f = e * 6;
+			v[f] = t.x + s * u, v[f + 1] = t.y + c * u, v[f + 2] = t.z, v[f + 3] = t.x - s * u, v[f + 4] = t.y - c * u, v[f + 5] = t.z;
 			let p = e * 8;
 			y[p] = .98, y[p + 1] = .97, y[p + 2] = .95, y[p + 3] = d, y[p + 4] = .98, y[p + 5] = .97, y[p + 6] = .95, y[p + 7] = d;
 		}
 		g.needsUpdate = !0, _.needsUpdate = !0;
 	}), /* @__PURE__ */ (0, Ng.jsx)("mesh", {
-		ref: c,
-		geometry: d,
-		material: f
+		ref: s,
+		geometry: u,
+		material: d
 	});
-}, LD = class {
+}, RD = class {
 	static sample(e) {
 		return {
 			strength: Math.sin(e * .7) * .6 + Math.sin(e * 1.5 + 1.2) * .3 + Math.sin(e * 3.2 + .4) * .1,
 			gust: Math.max(0, Math.sin(e * .35 - .8)) * .4
 		};
 	}
-}, RD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, scrollProgress: i, isReducedMotion: a = !1 }) => {
-	let o = (0, v.useRef)(null), s = P_(du, "assets/plane.png"), c = 150 / 1376 * n, l = 62 / 768 * r, u = 45 / 150 * c, d = -.27419354838709675 * l, f = (0, v.useMemo)(() => new Rs([
+}, zD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, isReducedMotion: i = !1 }) => {
+	let a = (0, v.useRef)(null), o = P_(du, "assets/plane.png"), s = 150 / 1376 * n, c = 62 / 768 * r, l = 45 / 150 * s, u = -.27419354838709675 * c, d = (0, v.useMemo)(() => new Rs([
 		new Y(.285, -.055, -3.01),
 		new Y(.176, .096, -3.01),
 		new Y(.011628, .324219, -3.01),
@@ -35537,38 +35537,37 @@ var ID = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, tailSpline: i, scroll
 		new Y(-.4, .65, -3.01),
 		new Y(-.72, .8, -3.01),
 		new Y(-1.18, .96, -3.01)
-	], !1, "centripetal"), []), p = 2 / 6;
-	return A_((s) => {
-		if (!o.current) return;
-		let c = s.clock.getElapsedTime();
-		a || LD.sample(c);
-		let l = p, m = 0;
-		if (i > .002) {
-			let e = Math.min(1, Math.max(0, i));
-			l = p + e * .6666666666666667, m = -e * .08;
-		} else if (!a) {
-			let e = Math.sin(c * .45) * .003;
-			l = p + e, m = Math.sin(c * .5) * .015;
+	], !1, "centripetal"), []), f = 2 / 6;
+	return A_((o) => {
+		if (!a.current) return;
+		let s = o.clock.getElapsedTime();
+		i || RD.sample(s);
+		let c = i ? 0 : ID.progress, p = f, m = 0;
+		if (c > .002) {
+			let e = Math.min(1, Math.max(0, c));
+			p = f + e * .6666666666666667, m = -e * .08;
+		} else if (!i) {
+			let e = Math.sin(s * .45) * .003;
+			p = f + e, m = Math.sin(s * .5) * .015;
 		}
-		let h = f.getPoint(Math.min(1, Math.max(0, l))), g = Math.cos(m), _ = Math.sin(m), v = h.x - (u * g - d * _) / n, y = h.y - (u * _ + d * g) / r, b = e + v * n, x = t + y * r;
-		o.current.position.set(b, x, -3), o.current.rotation.z = m;
-	}), /* @__PURE__ */ (0, Ng.jsxs)(Ng.Fragment, { children: [/* @__PURE__ */ (0, Ng.jsx)(ID, {
+		let h = d.getPoint(Math.min(1, Math.max(0, p))), g = Math.cos(m), _ = Math.sin(m), v = h.x - (l * g - u * _) / n, y = h.y - (l * _ + u * g) / r, b = e + v * n, x = t + y * r;
+		a.current.position.set(b, x, -3), a.current.rotation.z = m;
+	}), /* @__PURE__ */ (0, Ng.jsxs)(Ng.Fragment, { children: [/* @__PURE__ */ (0, Ng.jsx)(LD, {
 		bgPosX: e,
 		bgPosY: t,
 		bgWidth: n,
 		bgHeight: r,
-		tailSpline: f,
-		scrollProgress: i,
-		isReducedMotion: a
+		tailSpline: d,
+		isReducedMotion: i
 	}), /* @__PURE__ */ (0, Ng.jsxs)("mesh", {
-		ref: o,
+		ref: a,
 		position: [
 			e + -.021075581395348836 * n,
 			t + .3463541666666667 * r,
 			-3
 		],
-		children: [/* @__PURE__ */ (0, Ng.jsx)("planeGeometry", { args: [c, l] }), /* @__PURE__ */ (0, Ng.jsx)("meshBasicMaterial", {
-			map: s,
+		children: [/* @__PURE__ */ (0, Ng.jsx)("planeGeometry", { args: [s, c] }), /* @__PURE__ */ (0, Ng.jsx)("meshBasicMaterial", {
+			map: o,
 			transparent: !0,
 			depthWrite: !1,
 			side: 2
@@ -35577,7 +35576,7 @@ var ID = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, tailSpline: i, scroll
 };
 //#endregion
 //#region src/hooks/usePointerParallax.ts
-function zD() {
+function BD() {
 	let e = (0, v.useRef)({
 		x: 0,
 		y: 0
@@ -35599,78 +35598,78 @@ function zD() {
 }
 //#endregion
 //#region src/components/hero/HeroScene.tsx
-var BD = ({ scrollProgress: e, isReducedMotion: t = !1 }) => {
-	let { viewport: n, camera: r } = k_(), { target: i } = zD(), a = P_(du, "assets/hero-bg-clean.webp"), o = P_(du, "assets/layer-character-full.png"), s = P_(du, "assets/grass-tile.png"), c = (0, v.useRef)(null), l = (0, v.useRef)(null), u = (0, v.useRef)(null), d = n.width / n.height > 1376 / 768 ? n.width / 1376 : n.height / 768, f = 1376 * d, p = 768 * d, m = (n.width - f) / 2, h = (-n.height + p) / 2, g = Math.max(.4, n.height * .08), _ = n.width * 1.15, y = -n.height / 2 + g / 2 - .02, b = (0, v.useRef)({
+var VD = ({ isReducedMotion: e = !1 }) => {
+	typeof window < "u" && (window.__HERO_WORLD_RENDERS__ = (window.__HERO_WORLD_RENDERS__ || 0) + 1);
+	let { viewport: t, camera: n } = k_(), { target: r } = BD(), i = P_(du, "assets/hero-bg-clean.webp"), a = P_(du, "assets/layer-character-full.png"), o = P_(du, "assets/grass-tile.png"), s = (0, v.useRef)(null), c = (0, v.useRef)(null), l = (0, v.useRef)(null), u = t.width / t.height > 1376 / 768 ? t.width / 1376 : t.height / 768, d = 1376 * u, f = 768 * u, p = (t.width - d) / 2, m = (-t.height + f) / 2, h = Math.max(.4, t.height * .08), g = t.width * 1.15, _ = -t.height / 2 + h / 2 - .02, y = (0, v.useRef)({
 		x: 0,
 		y: 0
 	});
-	return A_((n, a) => {
-		let o = n.clock.getElapsedTime(), s = t ? {
+	return A_((t, i) => {
+		let a = t.clock.getElapsedTime(), o = e ? {
 			strength: 0,
 			gust: 0
-		} : LD.sample(o), d = t ? 0 : Math.max(0, 1 - e * 1.8);
-		t ? (b.current.x = 0, b.current.y = 0) : (b.current.x = kn.lerp(b.current.x, i.current.x * d, a * 3), b.current.y = kn.lerp(b.current.y, i.current.y * d, a * 3));
-		let f = b.current.x, p = b.current.y;
-		if (r instanceof Au) {
-			let t = 100 * (1 + e * .05);
-			r.zoom = kn.lerp(r.zoom, t, .1), r.updateProjectionMatrix();
+		} : RD.sample(a), u = e ? 0 : ID.progress, d = e ? 0 : Math.max(0, 1 - u * 1.8);
+		e ? (y.current.x = 0, y.current.y = 0) : (y.current.x = kn.lerp(y.current.x, r.current.x * d, i * 3), y.current.y = kn.lerp(y.current.y, r.current.y * d, i * 3));
+		let f = y.current.x, h = y.current.y;
+		if (n instanceof Au) {
+			let e = 100 * (1 + u * .05);
+			n.zoom = kn.lerp(n.zoom, e, .1), n.updateProjectionMatrix();
+		}
+		if (s.current) {
+			let e = .012;
+			s.current.position.x = p + f * e, s.current.position.y = m + h * e;
 		}
 		if (c.current) {
-			let e = .012;
-			c.current.position.x = m + f * e, c.current.position.y = h + p * e;
+			let e = .035, t = u * .2, n = -u * .14;
+			c.current.position.x = p + f * e + t, c.current.position.y = m + h * e + n;
 		}
 		if (l.current) {
-			let t = .035, n = e * .2, r = -e * .14;
-			l.current.position.x = m + f * t + n, l.current.position.y = h + p * t + r;
-		}
-		if (u.current) {
-			let n = .065, r = -e * .18;
-			u.current.position.x = f * n, u.current.position.y = y + p * n + r, t || (u.current.rotation.z = s.strength * .008);
+			let t = .065, n = -u * .18;
+			l.current.position.x = f * t, l.current.position.y = _ + h * t + n, e || (l.current.rotation.z = o.strength * .008);
 		}
 	}), /* @__PURE__ */ (0, Ng.jsxs)(Ng.Fragment, { children: [
 		/* @__PURE__ */ (0, Ng.jsxs)("mesh", {
-			ref: c,
+			ref: s,
 			position: [
+				p,
 				m,
-				h,
 				-8
 			],
-			children: [/* @__PURE__ */ (0, Ng.jsx)("planeGeometry", { args: [f, p] }), /* @__PURE__ */ (0, Ng.jsx)("meshBasicMaterial", {
-				map: a,
+			children: [/* @__PURE__ */ (0, Ng.jsx)("planeGeometry", { args: [d, f] }), /* @__PURE__ */ (0, Ng.jsx)("meshBasicMaterial", {
+				map: i,
 				depthWrite: !1
 			})]
 		}),
-		/* @__PURE__ */ (0, Ng.jsx)(RD, {
-			bgPosX: m,
-			bgPosY: h,
-			bgWidth: f,
-			bgHeight: p,
-			scrollProgress: e,
-			isReducedMotion: t
+		/* @__PURE__ */ (0, Ng.jsx)(zD, {
+			bgPosX: p,
+			bgPosY: m,
+			bgWidth: d,
+			bgHeight: f,
+			isReducedMotion: e
 		}),
 		/* @__PURE__ */ (0, Ng.jsxs)("mesh", {
-			ref: l,
+			ref: c,
 			position: [
+				p,
 				m,
-				h,
 				0
 			],
-			children: [/* @__PURE__ */ (0, Ng.jsx)("planeGeometry", { args: [f, p] }), /* @__PURE__ */ (0, Ng.jsx)("meshBasicMaterial", {
-				map: o,
+			children: [/* @__PURE__ */ (0, Ng.jsx)("planeGeometry", { args: [d, f] }), /* @__PURE__ */ (0, Ng.jsx)("meshBasicMaterial", {
+				map: a,
 				transparent: !0,
 				depthWrite: !1,
 				side: 2
 			})]
 		}),
 		/* @__PURE__ */ (0, Ng.jsxs)("mesh", {
-			ref: u,
+			ref: l,
 			position: [
 				0,
-				y,
+				_,
 				2
 			],
-			children: [/* @__PURE__ */ (0, Ng.jsx)("planeGeometry", { args: [_, g] }), /* @__PURE__ */ (0, Ng.jsx)("meshBasicMaterial", {
-				map: s,
+			children: [/* @__PURE__ */ (0, Ng.jsx)("planeGeometry", { args: [g, h] }), /* @__PURE__ */ (0, Ng.jsx)("meshBasicMaterial", {
+				map: o,
 				transparent: !0,
 				depthWrite: !1,
 				side: 2
@@ -35681,36 +35680,45 @@ var BD = ({ scrollProgress: e, isReducedMotion: t = !1 }) => {
 //#endregion
 //#region src/hero-scene.tsx
 cw.registerPlugin(ED);
-var VD = () => {
-	let [e, t] = (0, v.useState)(0), [n, r] = (0, v.useState)(!1);
+var HD = () => {
+	typeof window < "u" && (window.__HERO_APP_RENDERS__ = (window.__HERO_APP_RENDERS__ || 0) + 1);
+	let [e, t] = (0, v.useState)(!1);
 	return (0, v.useEffect)(() => {
 		let e = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-		r(e);
-		let n = document.getElementById("home");
-		if (!n || (document.body.classList.add("has-webgl"), n.classList.add("webgl-active"), e)) return;
-		let i = cw.context(() => {
-			let e = n.querySelectorAll("h1, p, a, img[src*=\"calligraphy\"], div[style*=\"writing-mode\"]"), r = document.querySelectorAll("header nav a");
-			cw.timeline({ scrollTrigger: {
-				trigger: n,
+		t(e);
+		let n = () => {
+			let t = document.getElementById("home");
+			if (!t) {
+				requestAnimationFrame(n);
+				return;
+			}
+			if (document.body.classList.add("has-webgl"), t.classList.add("webgl-active"), e) return;
+			let r = t.querySelectorAll("h1, p, a, img[src*=\"calligraphy\"], div[style*=\"writing-mode\"]"), i = document.querySelectorAll("header nav a"), a = cw.timeline({ scrollTrigger: {
+				trigger: t,
 				start: "top top",
 				end: "+=100%",
 				pin: !0,
 				pinSpacing: !0,
 				scrub: .8,
 				onUpdate: (e) => {
-					if (t(e.progress), r.length >= 2) {
-						let t = r[0], n = r[1];
+					if (ID.progress = e.progress, i.length >= 2) {
+						let t = i[0], n = i[1];
 						e.progress > .65 ? (t.style.opacity = "0.45", n.style.opacity = "1.0") : (t.style.opacity = "1.0", n.style.opacity = "0.62");
 					}
 				}
-			} }).to(e, {
+			} }).to(r, {
 				opacity: 0,
 				y: -35,
 				stagger: .02,
 				ease: "power1.out"
 			}, .1);
-		});
-		return () => i.revert();
+			return () => {
+				a.scrollTrigger?.kill(), a.kill();
+			};
+		}, r = n();
+		return () => {
+			typeof r == "function" && r();
+		};
 	}, []), /* @__PURE__ */ (0, Ng.jsx)(ey, {
 		orthographic: !0,
 		camera: {
@@ -35734,16 +35742,13 @@ var VD = () => {
 			pointerEvents: "none",
 			zIndex: 0
 		},
-		children: /* @__PURE__ */ (0, Ng.jsx)(BD, {
-			scrollProgress: e,
-			isReducedMotion: n
-		})
+		children: /* @__PURE__ */ (0, Ng.jsx)(VD, { isReducedMotion: e })
 	});
 };
-function HD() {
-	let e = document.getElementById("hero-scene-root");
-	e ? (console.log("[HeroScene] Mounting R3F canvas to #hero-scene-root..."), (0, y.createRoot)(e).render(/* @__PURE__ */ (0, Ng.jsx)(VD, {}))) : setTimeout(HD, 50);
+function UD() {
+	let e = document.getElementById("hero-scene-root"), t = document.getElementById("home");
+	e && t ? (console.log("[HeroScene] Mounting R3F canvas to #hero-scene-root (DOM ready)..."), (0, y.createRoot)(e).render(/* @__PURE__ */ (0, Ng.jsx)(HD, {}))) : setTimeout(UD, 30);
 }
-document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", HD) : HD();
+document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", UD) : UD();
 //#endregion
-export { VD as HeroApp };
+export { HD as HeroApp };

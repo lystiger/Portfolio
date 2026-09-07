@@ -3,13 +3,13 @@ import { useFrame, useLoader } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Contrail } from './Contrail';
 import { WindSystem } from './WindSystem';
+import { scrollMotionState } from './motionState';
 
 interface AircraftProps {
   bgPosX: number;
   bgPosY: number;
   bgWidth: number;
   bgHeight: number;
-  scrollProgress: number;
   isReducedMotion?: boolean;
 }
 
@@ -18,7 +18,6 @@ export const Aircraft: React.FC<AircraftProps> = ({
   bgPosY,
   bgWidth,
   bgHeight,
-  scrollProgress,
   isReducedMotion = false
 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
@@ -63,6 +62,7 @@ export const Aircraft: React.FC<AircraftProps> = ({
 
     const time = state.clock.getElapsedTime();
     const wind = isReducedMotion ? { strength: 0, gust: 0 } : WindSystem.sample(time);
+    const scrollProgress = isReducedMotion ? 0 : scrollMotionState.progress;
 
     let currentTHead = tRest;
     let rotZ = 0;
@@ -103,7 +103,6 @@ export const Aircraft: React.FC<AircraftProps> = ({
         bgWidth={bgWidth}
         bgHeight={bgHeight}
         tailSpline={tailSpline}
-        scrollProgress={scrollProgress}
         isReducedMotion={isReducedMotion}
       />
       <mesh ref={meshRef} position={[bgPosX + baseNormX * bgWidth, bgPosY + baseNormY * bgHeight, -3]}>

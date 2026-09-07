@@ -4,33 +4,39 @@ import { Canvas } from '@react-three/fiber';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { HeroWorld } from './components/hero/HeroScene';
+import { scrollMotionState } from './components/hero/motionState';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export const HeroApp: React.FC = () => {
-  const [scrollProgress, setScrollProgress] = useState(0);
+  if (typeof window !== 'undefined') {
+    (window as any).__HERO_APP_RENDERS__ = ((window as any).__HERO_APP_RENDERS__ || 0) + 1;
+  }
   const [isReducedMotion, setIsReducedMotion] = useState(false);
 
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     setIsReducedMotion(reduced);
 
-    const heroSection = document.getElementById('home');
-    if (!heroSection) return;
+    const setupScene = () => {
+      const heroSection = document.getElementById('home');
+      if (!heroSection) {
+        requestAnimationFrame(setupScene);
+        return;
+      }
 
-    // Activate WebGL mode on body permanently
-    document.body.classList.add('has-webgl');
-    heroSection.classList.add('webgl-active');
+      // Activate WebGL mode on body permanently
+      document.body.classList.add('has-webgl');
+      heroSection.classList.add('webgl-active');
 
-    if (reduced) return;
+      if (reduced) return;
 
-    const ctx = gsap.context(() => {
       const heroCopy = heroSection.querySelectorAll(
         'h1, p, a, img[src*="calligraphy"], div[style*="writing-mode"]'
       );
       const navLinks = document.querySelectorAll('header nav a');
 
-      gsap.timeline({
+      const tl = gsap.timeline({
         scrollTrigger: {
           trigger: heroSection,
           start: 'top top',
@@ -39,7 +45,7 @@ export const HeroApp: React.FC = () => {
           pinSpacing: true,
           scrub: 0.8,
           onUpdate: (self) => {
-            setScrollProgress(self.progress);
+            scrollMotionState.progress = self.progress;
 
             if (navLinks.length >= 2) {
               const homeLink = navLinks[0] as HTMLElement;
@@ -61,9 +67,17 @@ export const HeroApp: React.FC = () => {
         stagger: 0.02,
         ease: 'power1.out'
       }, 0.1);
-    });
 
-    return () => ctx.revert();
+      return () => {
+        tl.scrollTrigger?.kill();
+        tl.kill();
+      };
+    };
+
+    const cleanup = setupScene();
+    return () => {
+      if (typeof cleanup === 'function') cleanup();
+    };
   }, []);
 
   return (
@@ -80,19 +94,20 @@ export const HeroApp: React.FC = () => {
         zIndex: 0
       }}
     >
-      <HeroWorld scrollProgress={scrollProgress} isReducedMotion={isReducedMotion} />
+      <HeroWorld isReducedMotion={isReducedMotion} />
     </Canvas>
   );
 };
 
 function init() {
   const rootEl = document.getElementById('hero-scene-root');
-  if (rootEl) {
-    console.log('[HeroScene] Mounting R3F canvas to #hero-scene-root...');
+  const heroEl = document.getElementById('home');
+  if (rootEl && heroEl) {
+    console.log('[HeroScene] Mounting R3F canvas to #hero-scene-root (DOM ready)...');
     const root = createRoot(rootEl);
     root.render(<HeroApp />);
   } else {
-    setTimeout(init, 50);
+    setTimeout(init, 30);
   }
 }
 
@@ -101,3 +116,4 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+

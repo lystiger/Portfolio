@@ -3,6 +3,8 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { scrollMotionState } from './motionState';
 
+import { getFlightState } from './flightModel';
+
 interface ContrailProps {
   bgPosX: number;
   bgPosY: number;
@@ -23,9 +25,6 @@ export const Contrail: React.FC<ContrailProps> = ({
   historyLength = 55
 }) => {
   const meshRef = React.useRef<THREE.Mesh>(null);
-
-  const tRest = 2.0 / 6.0;
-  const tCloud = 1.0 / 6.0;
 
   const { geometry, material } = useMemo(() => {
     const geo = new THREE.BufferGeometry();
@@ -61,18 +60,11 @@ export const Contrail: React.FC<ContrailProps> = ({
 
     const time = state.clock.getElapsedTime();
     const scrollProgress = isReducedMotion ? 0 : scrollMotionState.progress;
-    let currentTHead = tRest;
-    let currentTTail = tCloud;
+    const flight = getFlightState(time, scrollProgress, isReducedMotion);
 
-    if (scrollProgress > 0.002) {
-      const progress = Math.min(1, Math.max(0, scrollProgress));
-      const t = Math.pow(progress, 1.15);
-      currentTHead = tRest + t * (1.0 - tRest);
-      currentTTail = Math.max(tCloud, currentTHead - 0.24);
-    } else if (!isReducedMotion) {
-      const idleOffset = Math.sin(time * 0.8) * 0.006;
-      currentTHead = tRest + idleOffset;
-    }
+    material.opacity = flight.opacity;
+    const currentTHead = flight.tHead;
+    const currentTTail = flight.tTail;
 
     const posAttr = geometry.attributes.position as THREE.BufferAttribute;
     const colAttr = geometry.attributes.color as THREE.BufferAttribute;

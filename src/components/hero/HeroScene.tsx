@@ -25,6 +25,13 @@ export const HeroWorld: React.FC<HeroSceneProps> = ({ isReducedMotion = false })
   const charRef = useRef<THREE.Mesh>(null);
   const grassRef = useRef<THREE.Mesh>(null);
 
+  React.useEffect(() => {
+    // Unmask WebGL only once textures are loaded and R3F is active
+    document.body.classList.add('has-webgl');
+    const heroSection = document.getElementById('home');
+    if (heroSection) heroSection.classList.add('webgl-active');
+  }, []);
+
   const baseAspect = 1376 / 768;
   const viewAspect = viewport.width / viewport.height;
 

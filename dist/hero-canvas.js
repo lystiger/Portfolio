@@ -35479,8 +35479,38 @@ ED.sort = function(e) {
 }, UT() && $.registerPlugin(ED);
 //#endregion
 //#region src/components/hero/motionState.ts
-var ID = { progress: 0 }, LD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, tailSpline: i, isReducedMotion: a = !1, historyLength: o = 55 }) => {
-	let s = v.useRef(null), c = 2 / 6, l = 1 / 6, { geometry: u, material: d } = (0, v.useMemo)(() => {
+var ID = { progress: 0 }, LD = 2 / 6, RD = 1 / 6;
+function zD(e, t, n) {
+	if (n) return {
+		tHead: LD,
+		tTail: RD,
+		rotZ: 0,
+		opacity: 1
+	};
+	let r = 7.6, i = (e + 4.768) % 8, a = LD, o = 1;
+	i < r ? (a = .12 + i / r * .34, o = i < .4 ? i / .4 : i > 7.199999999999999 ? Math.max(0, (r - i) / .4) : 1) : (a = .12, o = 0);
+	let s = -(a - LD) * .12 + Math.sin(e * 1.4) * .018;
+	if (t > .002) {
+		let e = Math.min(1, t * 2.5), n = Math.min(1, Math.max(0, t)), r = LD + n ** 1.15 * .6666666666666667, i = -n * .1, c = kn.lerp(a, r, e), l = kn.lerp(o, 1, e), u = kn.lerp(s, i, e);
+		return {
+			tHead: c,
+			tTail: Math.max(.04, c - .22),
+			rotZ: u,
+			opacity: l
+		};
+	}
+	let c = Math.max(.04, a - .22);
+	return {
+		tHead: a,
+		tTail: c,
+		rotZ: s,
+		opacity: o
+	};
+}
+//#endregion
+//#region src/components/hero/Contrail.tsx
+var BD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, tailSpline: i, isReducedMotion: a = !1, historyLength: o = 55 }) => {
+	let s = v.useRef(null), { geometry: c, material: l } = (0, v.useMemo)(() => {
 		let e = new Wi(), t = new Float32Array(o * 2 * 3), n = new Float32Array(o * 2 * 4), r = [];
 		for (let e = 0; e < o - 1; e++) {
 			let t = e * 2, n = e * 2 + 1, i = (e + 1) * 2, a = (e + 1) * 2 + 1;
@@ -35496,40 +35526,29 @@ var ID = { progress: 0 }, LD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r,
 			})
 		};
 	}, [o]);
-	return A_((d) => {
+	return A_((u) => {
 		if (!s.current) return;
-		let f = d.clock.getElapsedTime(), p = a ? 0 : ID.progress, m = c, h = l;
-		if (p > .002) m = c + Math.min(1, Math.max(0, p)) ** 1.15 * .6666666666666667, h = Math.max(l, m - .24);
-		else if (!a) {
-			let e = Math.sin(f * .8) * .006;
-			m = c + e;
-		}
-		let g = u.attributes.position, _ = u.attributes.color, v = g.array, y = _.array, b = [];
+		let d = zD(u.clock.getElapsedTime(), a ? 0 : ID.progress, a);
+		l.opacity = d.opacity;
+		let f = d.tHead, p = d.tTail, m = c.attributes.position, h = c.attributes.color, g = m.array, _ = h.array, v = [];
 		for (let a = 0; a < o; a++) {
-			let s = a / (o - 1), c = kn.lerp(m, h, s), l = i.getPoint(Math.min(1, Math.max(0, c)));
-			b.push(new Y(e + l.x * n, t + l.y * r, -3.01));
+			let s = a / (o - 1), c = kn.lerp(f, p, s), l = i.getPoint(Math.min(1, Math.max(0, c)));
+			v.push(new Y(e + l.x * n, t + l.y * r, -3.01));
 		}
 		for (let e = 0; e < o; e++) {
-			let t = b[e], n = b[Math.min(e + 1, o - 1)], r = n.x - t.x, i = n.y - t.y, a = Math.sqrt(r * r + i * i) || 1, s = -i / a, c = r / a, l = e / (o - 1), u = .014 + l * .024, d = Math.max(0, (1 - l * .82) * .88), f = e * 6;
-			v[f] = t.x + s * u, v[f + 1] = t.y + c * u, v[f + 2] = t.z, v[f + 3] = t.x - s * u, v[f + 4] = t.y - c * u, v[f + 5] = t.z;
+			let t = v[e], n = v[Math.min(e + 1, o - 1)], r = n.x - t.x, i = n.y - t.y, a = Math.sqrt(r * r + i * i) || 1, s = -i / a, c = r / a, l = e / (o - 1), u = .014 + l * .024, d = Math.max(0, (1 - l * .82) * .88), f = e * 6;
+			g[f] = t.x + s * u, g[f + 1] = t.y + c * u, g[f + 2] = t.z, g[f + 3] = t.x - s * u, g[f + 4] = t.y - c * u, g[f + 5] = t.z;
 			let p = e * 8;
-			y[p] = .98, y[p + 1] = .97, y[p + 2] = .95, y[p + 3] = d, y[p + 4] = .98, y[p + 5] = .97, y[p + 6] = .95, y[p + 7] = d;
+			_[p] = .98, _[p + 1] = .97, _[p + 2] = .95, _[p + 3] = d, _[p + 4] = .98, _[p + 5] = .97, _[p + 6] = .95, _[p + 7] = d;
 		}
-		g.needsUpdate = !0, _.needsUpdate = !0;
+		m.needsUpdate = !0, h.needsUpdate = !0;
 	}), /* @__PURE__ */ (0, Ng.jsx)("mesh", {
 		ref: s,
-		geometry: u,
-		material: d
+		geometry: c,
+		material: l
 	});
-}, RD = class {
-	static sample(e) {
-		return {
-			strength: Math.sin(e * .7) * .6 + Math.sin(e * 1.5 + 1.2) * .3 + Math.sin(e * 3.2 + .4) * .1,
-			gust: Math.max(0, Math.sin(e * .35 - .8)) * .4
-		};
-	}
-}, zD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, isReducedMotion: i = !1 }) => {
-	let a = (0, v.useRef)(null), o = P_(du, "assets/plane.png"), s = 150 / 1376 * n, c = 62 / 768 * r, l = 45 / 150 * s, u = -.27419354838709675 * c, d = (0, v.useMemo)(() => new Rs([
+}, VD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r, isReducedMotion: i = !1 }) => {
+	let a = (0, v.useRef)(null), o = (0, v.useRef)(null), s = P_(du, "assets/plane.png"), c = 150 / 1376 * n, l = 62 / 768 * r, u = 45 / 150 * c, d = -.27419354838709675 * l, f = (0, v.useMemo)(() => new Rs([
 		new Y(.285, -.055, -3.01),
 		new Y(.176, .096, -3.01),
 		new Y(.011628, .324219, -3.01),
@@ -35537,27 +35556,17 @@ var ID = { progress: 0 }, LD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r,
 		new Y(-.4, .65, -3.01),
 		new Y(-.72, .8, -3.01),
 		new Y(-1.18, .96, -3.01)
-	], !1, "centripetal"), []), f = 2 / 6;
-	return A_((o) => {
+	], !1, "centripetal"), []);
+	return A_((s) => {
 		if (!a.current) return;
-		let s = o.clock.getElapsedTime();
-		i || RD.sample(s);
-		let c = i ? 0 : ID.progress, p = f, m = 0;
-		if (c > .002) {
-			let e = Math.min(1, Math.max(0, c)) ** 1.15;
-			p = f + e * .6666666666666667, m = -e * .1;
-		} else if (!i) {
-			let e = Math.sin(s * .8) * .006;
-			p = f + e, m = Math.sin(s * .6) * .025;
-		}
-		let h = d.getPoint(Math.min(1, Math.max(0, p))), g = Math.cos(m), _ = Math.sin(m), v = h.x - (l * g - u * _) / n, y = h.y - (l * _ + u * g) / r, b = e + v * n, x = t + y * r;
-		a.current.position.set(b, x, -3), a.current.rotation.z = m;
-	}), /* @__PURE__ */ (0, Ng.jsxs)(Ng.Fragment, { children: [/* @__PURE__ */ (0, Ng.jsx)(LD, {
+		let c = zD(s.clock.getElapsedTime(), i ? 0 : ID.progress, i), l = f.getPoint(Math.min(1, Math.max(0, c.tHead))), p = Math.cos(c.rotZ), m = Math.sin(c.rotZ), h = l.x - (u * p - d * m) / n, g = l.y - (u * m + d * p) / r, _ = e + h * n, v = t + g * r;
+		a.current.position.set(_, v, -3), a.current.rotation.z = c.rotZ, o.current && (o.current.opacity = c.opacity);
+	}), /* @__PURE__ */ (0, Ng.jsxs)(Ng.Fragment, { children: [/* @__PURE__ */ (0, Ng.jsx)(BD, {
 		bgPosX: e,
 		bgPosY: t,
 		bgWidth: n,
 		bgHeight: r,
-		tailSpline: d,
+		tailSpline: f,
 		isReducedMotion: i
 	}), /* @__PURE__ */ (0, Ng.jsxs)("mesh", {
 		ref: a,
@@ -35566,17 +35575,25 @@ var ID = { progress: 0 }, LD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r,
 			t + .3463541666666667 * r,
 			-3
 		],
-		children: [/* @__PURE__ */ (0, Ng.jsx)("planeGeometry", { args: [s, c] }), /* @__PURE__ */ (0, Ng.jsx)("meshBasicMaterial", {
-			map: o,
+		children: [/* @__PURE__ */ (0, Ng.jsx)("planeGeometry", { args: [c, l] }), /* @__PURE__ */ (0, Ng.jsx)("meshBasicMaterial", {
+			ref: o,
+			map: s,
 			transparent: !0,
 			depthWrite: !1,
 			side: 2
 		})]
 	})] });
+}, HD = class {
+	static sample(e) {
+		return {
+			strength: Math.sin(e * .7) * .6 + Math.sin(e * 1.5 + 1.2) * .3 + Math.sin(e * 3.2 + .4) * .1,
+			gust: Math.max(0, Math.sin(e * .35 - .8)) * .4
+		};
+	}
 };
 //#endregion
 //#region src/hooks/usePointerParallax.ts
-function BD() {
+function UD() {
 	let e = (0, v.useRef)({
 		x: 0,
 		y: 0
@@ -35598,9 +35615,15 @@ function BD() {
 }
 //#endregion
 //#region src/components/hero/HeroScene.tsx
-var VD = ({ isReducedMotion: e = !1 }) => {
+var WD = ({ isReducedMotion: e = !1 }) => {
 	typeof window < "u" && (window.__HERO_WORLD_RENDERS__ = (window.__HERO_WORLD_RENDERS__ || 0) + 1);
-	let { viewport: t, camera: n } = k_(), { target: r } = BD(), i = P_(du, "assets/hero-bg-clean.webp"), a = P_(du, "assets/layer-character-full.png"), o = P_(du, "assets/grass-tile.png"), s = (0, v.useRef)(null), c = (0, v.useRef)(null), l = (0, v.useRef)(null), u = t.width / t.height > 1376 / 768 ? t.width / 1376 : t.height / 768, d = 1376 * u, f = 768 * u, p = (t.width - d) / 2, m = (-t.height + f) / 2, h = Math.min(.64, Math.max(.4, t.height * .06)), g = t.width * 1.15, _ = -t.height / 2 + h / 2 - .02, y = (0, v.useRef)({
+	let { viewport: t, camera: n } = k_(), { target: r } = UD(), i = P_(du, "assets/hero-bg-clean.webp"), a = P_(du, "assets/layer-character-full.png"), o = P_(du, "assets/grass-tile.png"), s = (0, v.useRef)(null), c = (0, v.useRef)(null), l = (0, v.useRef)(null);
+	v.useEffect(() => {
+		document.body.classList.add("has-webgl");
+		let e = document.getElementById("home");
+		e && e.classList.add("webgl-active");
+	}, []);
+	let u = t.width / t.height > 1376 / 768 ? t.width / 1376 : t.height / 768, d = 1376 * u, f = 768 * u, p = (t.width - d) / 2, m = (-t.height + f) / 2, h = Math.min(.64, Math.max(.4, t.height * .06)), g = t.width * 1.15, _ = -t.height / 2 + h / 2 - .02, y = (0, v.useRef)({
 		x: 0,
 		y: 0
 	});
@@ -35608,7 +35631,7 @@ var VD = ({ isReducedMotion: e = !1 }) => {
 		let a = t.clock.getElapsedTime(), o = e ? {
 			strength: 0,
 			gust: 0
-		} : RD.sample(a), u = e ? 0 : ID.progress, d = e ? 0 : Math.max(0, 1 - u * 1.8);
+		} : HD.sample(a), u = e ? 0 : ID.progress, d = e ? 0 : Math.max(0, 1 - u * 1.8);
 		e ? (y.current.x = 0, y.current.y = 0) : (y.current.x = kn.lerp(y.current.x, r.current.x * d, i * 3), y.current.y = kn.lerp(y.current.y, r.current.y * d, i * 3));
 		let f = y.current.x, h = y.current.y;
 		if (n instanceof Au) {
@@ -35640,7 +35663,7 @@ var VD = ({ isReducedMotion: e = !1 }) => {
 				depthWrite: !1
 			})]
 		}),
-		/* @__PURE__ */ (0, Ng.jsx)(zD, {
+		/* @__PURE__ */ (0, Ng.jsx)(VD, {
 			bgPosX: p,
 			bgPosY: m,
 			bgWidth: d,
@@ -35680,7 +35703,7 @@ var VD = ({ isReducedMotion: e = !1 }) => {
 //#endregion
 //#region src/hero-scene.tsx
 cw.registerPlugin(ED);
-var HD = () => {
+var GD = () => {
 	typeof window < "u" && (window.__HERO_APP_RENDERS__ = (window.__HERO_APP_RENDERS__ || 0) + 1);
 	let [e, t] = (0, v.useState)(!1);
 	return (0, v.useEffect)(() => {
@@ -35692,7 +35715,7 @@ var HD = () => {
 				r = requestAnimationFrame(c);
 				return;
 			}
-			if (document.body.classList.add("has-webgl"), t.classList.add("webgl-active"), e) return;
+			if (e) return;
 			let n = t.querySelectorAll("h1, p, a, img[src*=\"calligraphy\"], div[style*=\"writing-mode\"]"), i = document.querySelectorAll("header nav a");
 			a = cw.timeline({ scrollTrigger: {
 				trigger: t,
@@ -35759,13 +35782,13 @@ var HD = () => {
 			pointerEvents: "none",
 			zIndex: 0
 		},
-		children: /* @__PURE__ */ (0, Ng.jsx)(VD, { isReducedMotion: e })
+		children: /* @__PURE__ */ (0, Ng.jsx)(WD, { isReducedMotion: e })
 	});
 };
-function UD() {
+function KD() {
 	let e = document.getElementById("hero-scene-root"), t = document.getElementById("home");
-	e && t ? (console.log("[HeroScene] Mounting R3F canvas to #hero-scene-root (DOM ready)..."), (0, y.createRoot)(e).render(/* @__PURE__ */ (0, Ng.jsx)(HD, {}))) : setTimeout(UD, 30);
+	e && t ? (console.log("[HeroScene] Mounting R3F canvas to #hero-scene-root (DOM ready)..."), (0, y.createRoot)(e).render(/* @__PURE__ */ (0, Ng.jsx)(GD, {}))) : setTimeout(KD, 30);
 }
-document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", UD) : UD();
+document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", KD) : KD();
 //#endregion
-export { HD as HeroApp };
+export { GD as HeroApp };

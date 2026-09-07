@@ -5,6 +5,8 @@ import { Contrail } from './Contrail';
 import { WindSystem } from './WindSystem';
 import { scrollMotionState } from './motionState';
 
+import { getFlightState } from './flightModel';
+
 interface AircraftProps {
   bgPosX: number;
   bgPosY: number;
@@ -21,6 +23,7 @@ export const Aircraft: React.FC<AircraftProps> = ({
   isReducedMotion = false
 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
+  const materialRef = useRef<THREE.MeshBasicMaterial>(null);
   const texture = useLoader(THREE.TextureLoader, 'assets/plane.png');
 
   // Baseline resting coordinates in 1376x768 frame:
@@ -38,10 +41,6 @@ export const Aircraft: React.FC<AircraftProps> = ({
   const tailDy = -(17 / 62) * planeHeight;
 
   // Single unified aerodynamic spline of the aircraft tail
-  // Index 0: Deep in clouds
-  // Index 1: Cloud entry point (0.176, 0.096)
-  // Index 2: Exact resting tail position (0.011628, 0.324219)
-  // Indices 3..6: Smooth continuous climb trajectory into upper atmosphere
   const tailSpline = useMemo(() => {
     return new THREE.CatmullRomCurve3([
       new THREE.Vector3(0.285, -0.055, -3.01),
@@ -54,39 +53,19 @@ export const Aircraft: React.FC<AircraftProps> = ({
     ], false, 'centripetal');
   }, []);
 
-  // Rest state parameter: waypoint 2 of 6 = 2/6 = 1/3
-  const tRest = 2.0 / 6.0;
-
   useFrame((state) => {
     if (!meshRef.current) return;
 
     const time = state.clock.getElapsedTime();
-    const wind = isReducedMotion ? { strength: 0, gust: 0 } : WindSystem.sample(time);
     const scrollProgress = isReducedMotion ? 0 : scrollMotionState.progress;
-
-    let currentTHead = tRest;
-    let rotZ = 0;
-
-    if (scrollProgress > 0.002) {
-      const progress = Math.min(1, Math.max(0, scrollProgress));
-      // Responsive smooth flight easing that responds immediately to scroll
-      const t = Math.pow(progress, 1.15);
-      currentTHead = tRest + t * (1.0 - tRest);
-      // Subtle aerodynamic bank angle (up to ~6 degrees)
-      rotZ = -t * 0.10;
-    } else if (!isReducedMotion) {
-      // Gentle breathing idle hover in wind currents
-      const idleOffset = Math.sin(time * 0.8) * 0.006;
-      currentTHead = tRest + idleOffset;
-      rotZ = Math.sin(time * 0.6) * 0.025;
-    }
+    const flight = getFlightState(time, scrollProgress, isReducedMotion);
 
     // Calculate current tail position on spline
-    const tailNorm = tailSpline.getPoint(Math.min(1, Math.max(0, currentTHead)));
+    const tailNorm = tailSpline.getPoint(Math.min(1, Math.max(0, flight.tHead)));
 
     // Derive aircraft center position from tail position and rotation
-    const cosR = Math.cos(rotZ);
-    const sinR = Math.sin(rotZ);
+    const cosR = Math.cos(flight.rotZ);
+    const sinR = Math.sin(flight.rotZ);
     const centerNormX = tailNorm.x - (tailDx * cosR - tailDy * sinR) / bgWidth;
     const centerNormY = tailNorm.y - (tailDx * sinR + tailDy * cosR) / bgHeight;
 
@@ -94,7 +73,11 @@ export const Aircraft: React.FC<AircraftProps> = ({
     const posY = bgPosY + centerNormY * bgHeight;
 
     meshRef.current.position.set(posX, posY, -3);
-    meshRef.current.rotation.z = rotZ;
+    meshRef.current.rotation.z = flight.rotZ;
+
+    if (materialRef.current) {
+      materialRef.current.opacity = flight.opacity;
+    }
   });
 
   return (
@@ -110,6 +93,7 @@ export const Aircraft: React.FC<AircraftProps> = ({
       <mesh ref={meshRef} position={[bgPosX + baseNormX * bgWidth, bgPosY + baseNormY * bgHeight, -3]}>
         <planeGeometry args={[planeWidth, planeHeight]} />
         <meshBasicMaterial
+          ref={materialRef}
           map={texture}
           transparent
           depthWrite={false}

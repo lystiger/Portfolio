@@ -32,10 +32,6 @@ export const HeroApp: React.FC = () => {
         return;
       }
 
-      // Activate WebGL mode on body permanently
-      document.body.classList.add('has-webgl');
-      heroSection.classList.add('webgl-active');
-
       if (reduced) return;
 
       const heroCopy = heroSection.querySelectorAll(

@@ -5,4 +5,11 @@ image.png
 .DS_Store
 node_modules/
 .next/
-dist/
+dist/*
+!dist/hero-canvas.js
+
+# Test outputs
+e2e-*.png
+playwright-*.png
+test-*.png
+static-mobile-ref.png

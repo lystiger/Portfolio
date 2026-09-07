@@ -605,15 +605,25 @@ class Component extends DCLogic {
     var videos = document.querySelectorAll('[data-grass-loop]');
     for (var i = 0; i < videos.length; i++) {
       var video = videos[i];
-      if (video.__heroMounted) continue;
-      video.__heroMounted = true;
-      video.src = video.dataset.src;
-      var attempt = video.play();
-      // Autoplay can still be refused (Low Power Mode, a browser setting) and
-      // Safari does not decode VP9 alpha at all. Both leave the layer blank
-      // over grass that is already painted underneath, so no fallback beyond
-      // the still is needed.
-      if (attempt && attempt.catch) attempt.catch(function () {});
+      // The `muted` content attribute only initialises the muted property
+      // when the parser builds the element. The host rebuilds the hero from
+      // a template, so these nodes arrive with muted === false, and Chrome
+      // refuses to autoplay an unmuted video: play() rejects and the band
+      // never paints. `loop` goes the same way, leaving the band frozen on
+      // its last frame. Set the properties directly, every pass.
+      video.muted = true;
+      video.defaultMuted = true;
+      video.playsInline = true;
+      video.loop = true;
+      if (!video.getAttribute('src')) video.src = video.dataset.src;
+      if (video.paused) {
+        var attempt = video.play();
+        // Autoplay can still be refused (Low Power Mode, a browser setting)
+        // and Safari does not decode VP9 alpha at all. Both leave the layer
+        // blank over grass that is already painted underneath, so no
+        // fallback beyond the still is needed.
+        if (attempt && attempt.catch) attempt.catch(function () {});
+      }
     }
   }
 
@@ -721,6 +731,13 @@ class Component extends DCLogic {
 
   function start() {
     mountGrass();
+    // Re-run briefly: the host may swap the hero for a freshly built node
+    // after load, and the replacement needs muting and starting again.
+    var settles = 0;
+    var settle = setInterval(function () {
+      mountGrass();
+      if (++settles > 10) clearInterval(settle);
+    }, 700);
     schedule(2400);
     queueFade();
   }

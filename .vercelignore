@@ -1,0 +1,8 @@
+.git
+.vercel
+node_modules
+qa-results
+scripts
+bug
+uploads
+e2e-*.png

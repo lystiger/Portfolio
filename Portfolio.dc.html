@@ -63,13 +63,19 @@ a:hover { color:#5d7247; }
 .horizon-grass-video { z-index: 3; overflow: hidden; }
 
 /* ── Hero layered media ─────────────────────────────────────────────
-   #home stacks two decorative layers below the HTML copy:
-     1 .hero-base   the composited illustration, hero-master-bg.jpg
-     2 .hero-grass  seamless 8s WebM, foreground grass only
-   The airplane and the figure are painted into the plate rather than being
-   separate layers, so there is nothing to register against it. Both layers
-   are absolutely positioned inside a fixed-height section, so neither can
-   shift layout. */
+   #home draws one decorative layer below the HTML copy: .hero-base, the
+   composited illustration hero-master-bg.jpg. The airplane, the figure and
+   the meadow are all painted into that plate, so there is nothing to
+   register against it and nothing to overlay.
+
+   There is deliberately no foreground grass band here. The plate's meadow
+   only occupies its right ~62%; the bottom-left is sky, so a full-width
+   band puts grass in front of the clouds. Clipping it to the meadow is not
+   a fix either: the plate is anchored `cover right bottom`, so the hill
+   line slides horizontally as the viewport changes and no fixed mask
+   follows it. The animated band lives in the contact section instead,
+   where the artwork is a horizon and grass along the full width is
+   correct. */
 .hero-media { position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
 .hero-base {
   position:absolute; inset:0; width:100%; height:100%;
@@ -77,24 +83,6 @@ a:hover { color:#5d7247; }
   display:block; user-select:none; z-index:1;
 }
 
-/* Foreground grass. Height is a viewport band, so `cover` crops the video
-   from the bottom the same way the hero illustration is cropped. The
-   element carries no source until script attaches one and paints nothing
-   until then, so it can stay opaque instead of being revealed by a class. */
-.hero-grass {
-  position:absolute; left:0; right:0; bottom:-1px; z-index:4;
-  width:100%; height:clamp(60px,8vh,104px);
-  pointer-events:none; overflow:hidden;
-  /* Fade the top of the band so it grows out of the painted meadow rather
-     than sitting on it as a strip with a visible upper edge. Carried by the
-     wrapper, not the video — see .grass-mask. */
-  -webkit-mask-image:linear-gradient(180deg,transparent 0,rgba(0,0,0,.8) 34%,#000 68%);
-          mask-image:linear-gradient(180deg,transparent 0,rgba(0,0,0,.8) 34%,#000 68%);
-}
-.hero-grass > video {
-  display:block; width:100%; height:100%;
-  object-fit:cover; object-position:bottom center;
-}
 
 /* Mobile: reframe the landscape illustration so the figure is centred
    instead of pushed off the left edge, and skip the video entirely —
@@ -111,7 +99,6 @@ a:hover { color:#5d7247; }
     -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 20%);
             mask-image:linear-gradient(180deg,transparent 0,#000 20%);
   }
-  .hero-grass { display:none; }
   .hero-copy { padding-top:clamp(96px,14vh,140px) !important; padding-bottom:clamp(24px,4vh,40px) !important; }
   /* Both calls to action on one row only just fit at 390px, so the row
      rewraps when the webfont swaps in and drags everything under it. Stack
@@ -123,8 +110,8 @@ a:hover { color:#5d7247; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior:auto; }
   *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
-  /* The plate is already a complete still, so the moving layers just go. */
-  .horizon-grass-video, .hero-grass { display:none !important; }
+  /* The plate is already a complete still, so the moving layer just goes. */
+  .horizon-grass-video { display:none !important; }
 }
 </style>
 </helmet>
@@ -181,7 +168,6 @@ a:hover { color:#5d7247; }
 <section id="home" data-screen-label="Hero" style="position:relative;overflow:hidden;min-height:100svh;scroll-margin-top:0;background:#75a8cb">
   <div class="hero-media" aria-hidden="true">
     <img class="hero-base" src="assets/hero-master-bg.jpg" alt="" width="1376" height="768" fetchpriority="high" decoding="async" />
-    <div class="hero-grass" aria-hidden="true"><video data-grass-loop data-src="assets/hero-grass-loop.webm" width="1920" height="266" muted loop playsinline autoplay preload="none" disablepictureinpicture></video></div>
   </div>
 
   <div aria-hidden="true" style="position:absolute;right:clamp(12px,1.6vw,30px);top:14%;z-index:4;writing-mode:vertical-rl;font-family:'Noto Serif JP',serif;font-weight:300;font-size:clamp(20px,2.1vw,32px);letter-spacing:.18em;color:#25313c;opacity:.9;line-height:1">風立ちぬ<span style="display:inline-block;width:1px;height:30px;background:#3d4b57;margin:14px 0"></span><span style="font-size:.42em;letter-spacing:.34em">生きねば</span></div>

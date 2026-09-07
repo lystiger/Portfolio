@@ -93,8 +93,9 @@ export const HeroWorld: React.FC<HeroSceneProps> = ({ isReducedMotion = false })
       const factor = 0.035;
       const scrollShiftX = scrollProgress * 0.20;
       const scrollShiftY = -scrollProgress * 0.14;
+      const idleCharY = isReducedMotion ? 0 : Math.sin(time * 0.6) * 0.005;
       charRef.current.position.x = bgPosX + px * factor + scrollShiftX;
-      charRef.current.position.y = bgPosY + py * factor + scrollShiftY;
+      charRef.current.position.y = bgPosY + py * factor + scrollShiftY + idleCharY;
     }
 
     // Layer 5: Foreground Grass (Z = 2, restrained 8-10px parallax, gentle wind sway)
@@ -105,7 +106,7 @@ export const HeroWorld: React.FC<HeroSceneProps> = ({ isReducedMotion = false })
       grassRef.current.position.y = grassY + py * factor + scrollShiftY;
 
       if (!isReducedMotion) {
-        grassRef.current.rotation.z = wind.strength * 0.008;
+        grassRef.current.rotation.z = wind.strength * 0.022;
       }
     }
   });

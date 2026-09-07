@@ -35499,11 +35499,9 @@ var ID = { progress: 0 }, LD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r,
 	return A_((d) => {
 		if (!s.current) return;
 		let f = d.clock.getElapsedTime(), p = a ? 0 : ID.progress, m = c, h = l;
-		if (p > .002) {
-			let e = Math.min(1, Math.max(0, p)), t = e * e * e;
-			m = c + t * .6666666666666667, h = Math.max(l, m - .24);
-		} else if (!a) {
-			let e = Math.sin(f * .45) * .003;
+		if (p > .002) m = c + Math.min(1, Math.max(0, p)) ** 1.15 * .6666666666666667, h = Math.max(l, m - .24);
+		else if (!a) {
+			let e = Math.sin(f * .8) * .006;
 			m = c + e;
 		}
 		let g = u.attributes.position, _ = u.attributes.color, v = g.array, y = _.array, b = [];
@@ -35546,11 +35544,11 @@ var ID = { progress: 0 }, LD = ({ bgPosX: e, bgPosY: t, bgWidth: n, bgHeight: r,
 		i || RD.sample(s);
 		let c = i ? 0 : ID.progress, p = f, m = 0;
 		if (c > .002) {
-			let e = Math.min(1, Math.max(0, c)), t = e * e * e;
-			p = f + t * .6666666666666667, m = -t * .08;
+			let e = Math.min(1, Math.max(0, c)) ** 1.15;
+			p = f + e * .6666666666666667, m = -e * .1;
 		} else if (!i) {
-			let e = Math.sin(s * .45) * .003;
-			p = f + e, m = Math.sin(s * .5) * .015;
+			let e = Math.sin(s * .8) * .006;
+			p = f + e, m = Math.sin(s * .6) * .025;
 		}
 		let h = d.getPoint(Math.min(1, Math.max(0, p))), g = Math.cos(m), _ = Math.sin(m), v = h.x - (l * g - u * _) / n, y = h.y - (l * _ + u * g) / r, b = e + v * n, x = t + y * r;
 		a.current.position.set(b, x, -3), a.current.rotation.z = m;
@@ -35622,12 +35620,12 @@ var VD = ({ isReducedMotion: e = !1 }) => {
 			s.current.position.x = p + f * e, s.current.position.y = m + h * e;
 		}
 		if (c.current) {
-			let e = .035, t = u * .2, n = -u * .14;
-			c.current.position.x = p + f * e + t, c.current.position.y = m + h * e + n;
+			let t = .035, n = u * .2, r = -u * .14, i = e ? 0 : Math.sin(a * .6) * .005;
+			c.current.position.x = p + f * t + n, c.current.position.y = m + h * t + r + i;
 		}
 		if (l.current) {
 			let t = .065, n = -u * .18;
-			l.current.position.x = f * t, l.current.position.y = _ + h * t + n, e || (l.current.rotation.z = o.strength * .008);
+			l.current.position.x = f * t, l.current.position.y = _ + h * t + n, e || (l.current.rotation.z = o.strength * .022);
 		}
 	}), /* @__PURE__ */ (0, Ng.jsxs)(Ng.Fragment, { children: [
 		/* @__PURE__ */ (0, Ng.jsxs)("mesh", {

@@ -69,15 +69,16 @@ export const Aircraft: React.FC<AircraftProps> = ({
 
     if (scrollProgress > 0.002) {
       const progress = Math.min(1, Math.max(0, scrollProgress));
-      const t = progress * progress * progress;
+      // Responsive smooth flight easing that responds immediately to scroll
+      const t = Math.pow(progress, 1.15);
       currentTHead = tRest + t * (1.0 - tRest);
-      // Subtle bank angle (up to ~5 degrees)
-      rotZ = -t * 0.08;
+      // Subtle aerodynamic bank angle (up to ~6 degrees)
+      rotZ = -t * 0.10;
     } else if (!isReducedMotion) {
-      // Idle hover
-      const idleOffset = Math.sin(time * 0.45) * 0.003;
+      // Gentle breathing idle hover in wind currents
+      const idleOffset = Math.sin(time * 0.8) * 0.006;
       currentTHead = tRest + idleOffset;
-      rotZ = Math.sin(time * 0.5) * 0.015;
+      rotZ = Math.sin(time * 0.6) * 0.025;
     }
 
     // Calculate current tail position on spline

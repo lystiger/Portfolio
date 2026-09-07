@@ -63,38 +63,18 @@ a:hover { color:#5d7247; }
 .horizon-grass-video { z-index: 3; overflow: hidden; }
 
 /* ── Hero layered media ─────────────────────────────────────────────
-   #home stacks four decorative layers below the HTML copy:
-     1 .hero-base       static illustration (canonical background + fallback)
-     2 .hero-plane      airplane + contrail, one traversal then a long gap
-     3 .hero-character  transparent character plate, registered to .hero-base
-     4 .hero-grass      seamless 8s WebM, foreground grass only
-   Every layer is absolutely positioned inside a fixed-height section, so
-   none of them can shift layout. Under prefers-reduced-motion the <picture>
-   below serves the original composited still and layers 2-4 are removed. */
+   #home stacks two decorative layers below the HTML copy:
+     1 .hero-base   the composited illustration, hero-master-bg.jpg
+     2 .hero-grass  seamless 8s WebM, foreground grass only
+   The airplane and the figure are painted into the plate rather than being
+   separate layers, so there is nothing to register against it. Both layers
+   are absolutely positioned inside a fixed-height section, so neither can
+   shift layout. */
 .hero-media { position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
-.hero-base, .hero-character {
+.hero-base {
   position:absolute; inset:0; width:100%; height:100%;
   object-fit:cover; object-position:right bottom;
-  display:block; user-select:none;
-}
-.hero-base { z-index:1; }
-.hero-character { z-index:3; }
-
-/* Airplane. It parks off the right edge at opacity 0 and is flown by the
-   Web Animations API rather than a CSS class, because the host re-renders
-   the hero and strips class/attribute changes made from script. */
-.hero-plane {
-  position:absolute; left:100%; top:15%; z-index:2;
-  width:clamp(38px,4.4vw,70px);
-  opacity:0; will-change:transform,opacity;
-}
-.hero-plane img { display:block; width:100%; height:auto; }
-.hero-contrail {
-  position:absolute; top:44%; left:82%;
-  width:clamp(90px,15vw,260px); height:1.6px;
-  transform-origin:left center; transform:rotate(2.4deg);
-  background:linear-gradient(90deg,rgba(255,255,255,.5),rgba(255,255,255,0));
-  filter:blur(1.3px);
+  display:block; user-select:none; z-index:1;
 }
 
 /* Foreground grass. Height is a viewport band, so `cover` crops the video
@@ -125,15 +105,13 @@ a:hover { color:#5d7247; }
      landscape plate and blow the figure up over the copy. Anchor the art
      to the lower half at close to its own aspect instead, and dissolve its
      top edge into the section colour so the join reads as haze. */
-  .hero-base, .hero-character {
+  .hero-base {
     top:auto; bottom:0; height:56%;
     object-position:66% bottom;
     -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 20%);
             mask-image:linear-gradient(180deg,transparent 0,#000 20%);
   }
   .hero-grass { display:none; }
-  .hero-plane { top:9%; width:clamp(40px,10vw,60px); }
-  .hero-contrail { width:clamp(60px,14vw,120px); }
   .hero-copy { padding-top:clamp(96px,14vh,140px) !important; padding-bottom:clamp(24px,4vh,40px) !important; }
   /* Both calls to action on one row only just fit at 390px, so the row
      rewraps when the webfont swaps in and drags everything under it. Stack
@@ -145,10 +123,8 @@ a:hover { color:#5d7247; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior:auto; }
   *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
-  .horizon-grass-video { display:none !important; }
-  /* The still served by <picture> already contains the figure and the
-     airplane, so the moving plates are removed rather than frozen. */
-  .hero-character, .hero-plane, .hero-grass { display:none !important; }
+  /* The plate is already a complete still, so the moving layers just go. */
+  .horizon-grass-video, .hero-grass { display:none !important; }
 }
 </style>
 </helmet>
@@ -204,22 +180,7 @@ a:hover { color:#5d7247; }
 
 <section id="home" data-screen-label="Hero" style="position:relative;overflow:hidden;min-height:100svh;scroll-margin-top:0;background:#75a8cb">
   <div class="hero-media" aria-hidden="true">
-    <picture>
-      <source media="(prefers-reduced-motion: reduce)" srcset="assets/hero-master-bg.webp" />
-      <img class="hero-base" src="assets/hero-bg-clean.webp" alt="" width="1376" height="768" fetchpriority="high" decoding="async" />
-    </picture>
-    <sc-if value="{{ planeFlight }}" hint-placeholder-val="{{ true }}">
-      <div class="hero-plane" data-hero-plane>
-        <span class="hero-contrail"></span>
-        <img src="assets/plane.png" alt="" width="150" height="62" loading="lazy" decoding="async" />
-      </div>
-    </sc-if>
-    <picture>
-      <!-- display:none does not stop the fetch, and under reduced motion the
-           still already contains the figure, so swap in an empty pixel. -->
-      <source media="(prefers-reduced-motion: reduce)" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" />
-      <img class="hero-character" src="assets/layer-character-full.png" alt="" width="1376" height="768" decoding="async" />
-    </picture>
+    <img class="hero-base" src="assets/hero-master-bg.jpg" alt="" width="1376" height="768" fetchpriority="high" decoding="async" />
     <div class="hero-grass" aria-hidden="true"><video data-grass-loop data-src="assets/hero-grass-loop.webm" width="1920" height="266" muted loop playsinline autoplay preload="none" disablepictureinpicture></video></div>
   </div>
 
@@ -580,24 +541,14 @@ class Component extends DCLogic {
 <script>
 /* Hero foreground media driver.
    Two jobs, both no-ops under prefers-reduced-motion:
-     1. Attach the grass loop's source only on viewports that will play it,
+     1. Attach each grass loop's source only on viewports that will play it,
         so phones never download the file.
-     2. Fly the airplane once shortly after load, then replay on a long,
-        randomised interval so it never reads as a fixed cycle.
+     2. Fade the hero copy out as the hero scrolls away.
    The host re-renders #home from a template, which strips classes and
-   data-attributes set from script. State therefore lives on expando
-   properties and the flight runs through the Web Animations API, neither
-   of which a DOM patcher touches. */
+   data-attributes set from script, so state lives on expando properties and
+   the media are re-primed on every pass. */
 (function () {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  var FLIGHT_MS = 11000;
-  // Start-to-start is FLIGHT_MS + GAP: a plane every 21-43s, on screen for
-  // 11s of that. Frequent enough to catch on a short visit, still uneven
-  // enough that it does not read as a loop.
-  var GAP_MIN_MS = 10000;
-  var GAP_RANGE_MS = 22000;
-  var timer = 0;
 
   function mountGrass() {
     if (!window.matchMedia('(min-width: 769px)').matches) return;
@@ -625,32 +576,6 @@ class Component extends DCLogic {
         if (attempt && attempt.catch) attempt.catch(function () {});
       }
     }
-  }
-
-  function heroOnScreen() {
-    var hero = document.getElementById('home');
-    if (!hero) return false;
-    var rect = hero.getBoundingClientRect();
-    return rect.bottom > 0 && rect.top < window.innerHeight;
-  }
-
-  function schedule(delay) {
-    clearTimeout(timer);
-    timer = setTimeout(fly, delay);
-  }
-
-  function fly() {
-    var plane = document.querySelector('[data-hero-plane]');
-    if (!plane || !plane.animate) { schedule(GAP_MIN_MS); return; }
-    // Skip the traversal when nobody can see it, and check back sooner.
-    if (document.hidden || !heroOnScreen()) { schedule(15000); return; }
-    plane.animate([
-      { transform: 'translate3d(0,0,0)', opacity: 0 },
-      { transform: 'translate3d(-9vw,-0.6vh,0)', opacity: 0.92, offset: 0.07 },
-      { transform: 'translate3d(-115vw,-8.1vh,0)', opacity: 0.92, offset: 0.9 },
-      { transform: 'translate3d(-128vw,-9vh,0)', opacity: 0 }
-    ], { duration: FLIGHT_MS, easing: 'cubic-bezier(.36,.05,.62,1)', fill: 'both' });
-    schedule(FLIGHT_MS + GAP_MIN_MS + Math.random() * GAP_RANGE_MS);
   }
 
   /* Hero copy fade.
@@ -738,7 +663,6 @@ class Component extends DCLogic {
       mountGrass();
       if (++settles > 10) clearInterval(settle);
     }, 700);
-    schedule(2400);
     queueFade();
   }
 

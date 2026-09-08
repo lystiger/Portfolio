@@ -54,12 +54,27 @@ a:hover { color:#5d7247; }
   -webkit-mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.8) 30%, #000 64%);
           mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.8) 30%, #000 64%);
 }
+/* Scoped to the loop's wrapper: .horizon-grass carries .grass-mask too, and
+   an unscoped height:100% here would override its clamped band height. */
+.horizon-grass-video > .grass-mask,
 .grass-mask > video {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: bottom center;
+}
+/* The plate is painterly and soft at its own resolution, and `cover` then
+   draws it at roughly 1.3x on a 2x display, so the band reads mushy. The
+   still is sharpened in the asset itself; the loop cannot be, because
+   re-encoding it through ffmpeg drops the VP9 alpha channel and bakes the
+   matte fringe into the sky. A convolution at paint time is the only pass
+   left for the moving layer. It sits on the outer element, never on the
+   masked one — filter and mask on a single video wrapper is the pairing
+   that GPU compositors have dropped here before. */
+.grass-sharpen { filter: url(#grass-sharpen); }
+@supports not (filter: url(#grass-sharpen)) {
+  .grass-sharpen { filter: contrast(1.08) saturate(1.05); }
 }
 /* The video carries the per-blade motion; the still underneath is what
    shows on mobile, in reduced motion, and wherever VP9 alpha will not
@@ -406,8 +421,13 @@ a:hover { color:#5d7247; }
     <div class="cloud" style="position:absolute;top:14%;left:0;width:480px;height:160px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.8),rgba(255,255,255,0));filter:blur(18px);animation:drift 280s linear infinite;animation-delay:-60s"></div>
     <div class="cloud" style="position:absolute;top:40%;left:0;width:340px;height:120px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.62),rgba(255,255,255,0));filter:blur(20px);animation:drift 340s linear infinite;animation-delay:-210s"></div>
   </div>
+  <svg aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute">
+    <filter id="grass-sharpen" x="0" y="0" width="100%" height="100%">
+      <feConvolveMatrix order="3" preserveAlpha="true" kernelMatrix="0 -0.45 0 -0.45 2.8 -0.45 0 -0.45 0" />
+    </filter>
+  </svg>
   <img src="assets/horizon-grass.png" class="horizon-grass grass-mask" alt="" aria-hidden="true" loading="lazy" decoding="async" />
-  <div class="horizon-grass-video grass-mask" aria-hidden="true"><video data-grass-loop data-src="assets/hero-grass-loop.webm" width="1920" height="266" muted loop playsinline autoplay preload="none" disablepictureinpicture></video></div>
+  <div class="horizon-grass-video grass-sharpen" aria-hidden="true"><div class="grass-mask"><video data-grass-loop data-src="assets/hero-grass-loop.webm" width="1920" height="266" muted loop playsinline autoplay preload="none" disablepictureinpicture></video></div></div>
   <div aria-hidden="true" style="position:absolute;inset:0;z-index:3;pointer-events:none;background-image:var(--grain);background-size:160px 160px;opacity:.07;mix-blend-mode:overlay"></div>
 
   <div style="position:relative;z-index:4;max-width:1180px;margin:0 auto;width:100%;padding:clamp(70px,9vw,120px) clamp(22px,6vw,64px) clamp(90px,11vw,150px)">

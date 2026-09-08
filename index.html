@@ -41,7 +41,12 @@ a:hover { color:#5d7247; }
   pointer-events: none;
   z-index: 2;
 }
-/* The fade is applied to a wrapper, never to the <video> itself. A mask on
+/* Both band layers carry this fade. The still needs it as much as the loop
+   does: `cover` crops the plate to its bottom fifth at desktop widths, so
+   an unmasked still ends in a straight line of sliced-off blades, and it
+   shows through the loop's own faded top edge.
+
+   The fade is applied to a wrapper, never to the <video> itself. A mask on
    a video element is dropped by some GPU compositors — the media decodes
    and plays but paints nothing — while the identical mask on a wrapper (or
    on an <img>) composites correctly. */
@@ -401,7 +406,7 @@ a:hover { color:#5d7247; }
     <div class="cloud" style="position:absolute;top:14%;left:0;width:480px;height:160px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.8),rgba(255,255,255,0));filter:blur(18px);animation:drift 280s linear infinite;animation-delay:-60s"></div>
     <div class="cloud" style="position:absolute;top:40%;left:0;width:340px;height:120px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.62),rgba(255,255,255,0));filter:blur(20px);animation:drift 340s linear infinite;animation-delay:-210s"></div>
   </div>
-  <img src="assets/horizon-grass.png" class="horizon-grass" alt="" aria-hidden="true" loading="lazy" decoding="async" />
+  <img src="assets/horizon-grass.png" class="horizon-grass grass-mask" alt="" aria-hidden="true" loading="lazy" decoding="async" />
   <div class="horizon-grass-video grass-mask" aria-hidden="true"><video data-grass-loop data-src="assets/hero-grass-loop.webm" width="1920" height="266" muted loop playsinline autoplay preload="none" disablepictureinpicture></video></div>
   <div aria-hidden="true" style="position:absolute;inset:0;z-index:3;pointer-events:none;background-image:var(--grain);background-size:160px 160px;opacity:.07;mix-blend-mode:overlay"></div>
 

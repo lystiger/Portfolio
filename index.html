@@ -229,13 +229,15 @@ a:hover { color:#5d7247; }
     </div>
 
     <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
-      <nav aria-label="Sections" style="display:flex;gap:clamp(14px,2.4vw,38px);align-items:baseline;padding-top:12px">
+      <nav id="secnav" aria-label="Sections" style="position:relative;display:flex;gap:clamp(14px,2.4vw,38px);align-items:baseline;padding-top:12px;padding-bottom:24px">
         <a href="#home" style="display:flex;gap:7px;align-items:baseline" style-hover="opacity:.62"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5b6874">01.</span><span style="font-size:13.5px;font-weight:500;letter-spacing:.01em">Home</span></a>
         <a href="#story" style="display:flex;gap:7px;align-items:baseline" style-hover="opacity:.62"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5b6874">02.</span><span style="font-size:13.5px;font-weight:500">Story</span></a>
         <a href="#projects" style="display:flex;gap:7px;align-items:baseline" style-hover="opacity:.62"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5b6874">03.</span><span style="font-size:13.5px;font-weight:500">Projects</span></a>
         <a href="#experience" style="display:flex;gap:7px;align-items:baseline" style-hover="opacity:.62"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5b6874">04.</span><span style="font-size:13.5px;font-weight:500">Experience</span></a>
         <a href="#beyond" style="display:flex;gap:7px;align-items:baseline" style-hover="opacity:.62"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5b6874">05.</span><span style="font-size:13.5px;font-weight:500">Beyond</span></a>
         <a href="#contact" style="display:flex;gap:7px;align-items:baseline" style-hover="opacity:.62"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5b6874">06.</span><span style="font-size:13.5px;font-weight:500">Contact</span></a>
+        <span aria-hidden="true" style="position:absolute;left:0;right:0;bottom:10px;height:1px;background:repeating-linear-gradient(90deg,rgba(45,56,68,.42) 0 3px,transparent 3px 8px)"></span>
+        <img id="navplane" aria-hidden="true" alt="" src="assets/plane.png" width="150" height="62" style="position:absolute;left:0;bottom:3px;width:40px;height:auto;transform-origin:50% 50%;will-change:transform;pointer-events:none" />
       </nav>
     </sc-if>
 
@@ -889,6 +891,125 @@ window.addEventListener('drop', function (e) { e.preventDefault(); }, false);
     // sending Tab back to it rather than out into the page behind.
     if (e.key === 'Tab') { e.preventDefault(); dialog().querySelector('[data-lb-close]').focus(); }
   });
+})();
+
+/* Section indicator: the aeroplane from the hero, shrunk, flying along a
+   dotted route line under the section names and parking under whichever
+   section is on screen.
+
+   Same re-render discipline as everything else on this page — the host can
+   swap the header wholesale, so nothing is cached across calls and the
+   authored markup carries no transform. State that must survive a call but
+   not a swap (last position, heading) lives on the node itself, so a fresh
+   node starts clean and lands in place without sliding in from the left. */
+(function () {
+  var SECTIONS = ['home', 'story', 'projects', 'experience', 'beyond', 'contact'];
+  var BANK = 5;          // degrees of nose-up while travelling
+  var LIFT = 4;          // pixels of climb while travelling
+  var FLIGHT = 620;      // ms, matches the transition below
+  var queued = false;
+  var levelOff = null;
+
+  /* The section whose top has passed a line a third of the way down the
+     viewport. Read through getBoundingClientRect so it does not depend on
+     which ancestor happens to be positioned. */
+  function activeId() {
+    var line = window.innerHeight * 0.34;
+    var id = SECTIONS[0];
+    for (var i = 0; i < SECTIONS.length; i++) {
+      var el = document.getElementById(SECTIONS[i]);
+      if (el && el.getBoundingClientRect().top <= line) id = SECTIONS[i];
+    }
+    // Contact is shorter than the trigger line is deep, so at the very
+    // bottom of the page it would never be reached on a tall viewport.
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
+      id = SECTIONS[SECTIONS.length - 1];
+    }
+    return id;
+  }
+
+  function fly() {
+    queued = false;
+    var nav = document.getElementById('secnav');
+    var plane = document.getElementById('navplane');
+    if (!nav || !plane) return;
+
+    var id = activeId();
+    var link = nav.querySelector('a[href="#' + id + '"]');
+    if (!link) return;
+
+    var links = nav.querySelectorAll('a[href^="#"]');
+    for (var i = 0; i < links.length; i++) {
+      var on = links[i] === link;
+      // The resting value is left alone rather than pinned to 1, so the
+      // authored hover still has somewhere to go on the active label.
+      links[i].style.opacity = on ? '' : '.62';
+      if (on) links[i].setAttribute('aria-current', 'true');
+      else links[i].removeAttribute('aria-current');
+    }
+
+    var navRect = nav.getBoundingClientRect();
+    // The word, not the whole link: each label is prefixed with its number,
+    // and centring on the anchor parks the plane under the digits.
+    var label = link.lastElementChild || link;
+    var linkRect = label.getBoundingClientRect();
+    var x = linkRect.left - navRect.left + linkRect.width / 2 - plane.offsetWidth / 2;
+    // The host's template pass rewrites the style attribute on nodes it
+    // keeps, so an unchanged position is not enough to skip a pass: the
+    // transform it wiped has to go back on.
+    var placed = !!plane.style.transform;
+    if (placed && plane.__x !== undefined && Math.abs(x - plane.__x) < 0.5) return;
+
+    var first = !placed;
+    var dx = first ? 0 : x - plane.__x;
+    // The artwork faces left, so flying right is the mirrored one. The
+    // mirror also reverses the sense of a rotation, which is why the bank
+    // is written with the same sign either way: +BANK reads as nose-up in
+    // both headings.
+    var heading = dx > 0 ? -1 : dx < 0 ? 1 : (plane.__heading || 1);
+    plane.__heading = heading;
+    plane.__x = x;
+
+    // The bank and the climb are the flight itself; with the transition
+    // neutered by the reduced-motion rule they would only be a lurch that
+    // sits crooked for the length of the level-off, so they are dropped.
+    var moving = !first && dx !== 0 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    plane.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + (moving ? -LIFT : 0) + 'px,0)'
+      + ' scaleX(' + heading + ') rotate(' + (moving ? BANK : 0) + 'deg)';
+
+    if (first) {
+      // The authored markup carries no transition, so this placement is a
+      // jump; arm the animation for every move after it.
+      requestAnimationFrame(function () {
+        if (plane.isConnected) plane.style.transition = 'transform ' + FLIGHT + 'ms cubic-bezier(.5,.02,.2,1)';
+      });
+      return;
+    }
+    if (!plane.style.transition) plane.style.transition = 'transform ' + FLIGHT + 'ms cubic-bezier(.5,.02,.2,1)';
+    if (moving) {
+      clearTimeout(levelOff);
+      levelOff = setTimeout(function () {
+        if (!plane.isConnected) return;
+        plane.style.transform = 'translate3d(' + x.toFixed(1) + 'px,0,0) scaleX(' + heading + ') rotate(0deg)';
+      }, FLIGHT);
+    }
+  }
+
+  function queue() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(fly);
+  }
+
+  window.addEventListener('scroll', queue, { passive: true });
+  window.addEventListener('resize', queue, { passive: true });
+  // A swapped header arrives with the authored markup: no transform, no
+  // transition, and no expandos, so the next pass re-places it silently.
+  new MutationObserver(queue).observe(document.documentElement, { childList: true, subtree: true });
+  if (document.readyState === 'complete') queue();
+  else window.addEventListener('load', queue, { once: true });
+  // The webfonts change the label widths, and with them the waypoints.
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(queue);
 })();
 })();
 </script>

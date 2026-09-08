@@ -133,6 +133,14 @@ a:hover { color:#5d7247; }
   /* The plate is already a complete still, so the moving layer just goes. */
   .horizon-grass-video { display:none !important; }
 }
+
+/* The Beyond photos are placed by hand now, so the slots are frozen. The
+   component wires click-to-browse and a file drop target unconditionally —
+   only its edit controls gate on the authoring runtime — which on a public
+   page means a visitor's click opens their file picker. Nothing was ever
+   gained by leaving it live: a drop outside that runtime is held in memory
+   and lost on reload, so it never reached the deployed page anyway. */
+image-slot { pointer-events: none; }
 </style>
 </helmet>
 <main style="font-family:'IBM Plex Sans',system-ui,sans-serif;color:#25303c;background:#f1e3ce;overflow-x:hidden">
@@ -702,6 +710,13 @@ class Component extends DCLogic {
     lastProgress = -1;
     queueFade();
   }, { passive: true });
+
+  /* pointer-events:none takes the slots out of hit-testing, so neither the
+     click nor the drop reaches them. This is the other half: without it the
+     browser's own default would still open a file dragged anywhere onto the
+     page, replacing the site with the image. */
+  window.addEventListener('dragover', function (e) { e.preventDefault(); }, false);
+  window.addEventListener('drop', function (e) { e.preventDefault(); }, false);
 })();
 </script>
 </body>

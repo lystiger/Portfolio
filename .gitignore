@@ -15,4 +15,6 @@ static-mobile-ref.png
 .vercel
 .env*
 *.pdf
+# except the one the site links from its contact row.
+!resume.pdf
 .shot*.js

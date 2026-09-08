@@ -11,7 +11,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..500&amp;family=IBM+Plex+Sans:wght@300;400;500&amp;family=IBM+Plex+Mono:wght@300;400&amp;family=Noto+Serif+JP:wght@200;300&amp;display=swap" rel="stylesheet" />
-<script src="./image-slot.js"></script>
 <style>
 html { scroll-behavior: smooth; }
 body { margin:0; background:#f1e3ce; -webkit-font-smoothing:antialiased;
@@ -134,13 +133,50 @@ a:hover { color:#5d7247; }
   .horizon-grass-video { display:none !important; }
 }
 
-/* The Beyond photos are placed by hand now, so the slots are frozen. The
-   component wires click-to-browse and a file drop target unconditionally —
-   only its edit controls gate on the authoring runtime — which on a public
-   page means a visitor's click opens their file picker. Nothing was ever
-   gained by leaving it live: a drop outside that runtime is held in memory
-   and lost on reload, so it never reached the deployed page anyway. */
-image-slot { pointer-events: none; }
+/* Beyond frames. The two photographs fill their 4:3 frame. The two
+   certificates are portrait at 0.71, so `cover` would crop them to an
+   unreadable horizontal band through the middle — they sit `contain` on
+   paper instead, and the lightbox is where they are actually read. */
+.beyond-shot {
+  display: block; width: 100%; aspect-ratio: 4/3;
+  margin: 0; padding: 0; border: 0;
+  background: #efe4cf; overflow: hidden; cursor: zoom-in;
+}
+.beyond-shot > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.beyond-shot[data-fit="contain"] { background: #fbf6ea; }
+.beyond-shot[data-fit="contain"] > img { object-fit: contain; }
+
+/* Visibility is driven by data-open, not the `hidden` attribute: the x-dc
+   template pass strips a bare boolean attribute, so a `hidden` dialog came
+   back rendered open across the whole page. */
+#lightbox { display: none; }
+#lightbox[data-open] {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; padding: clamp(16px,4vw,52px);
+  background: rgba(24,22,18,.88);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+}
+/* Width is set in script from naturalWidth: these images run from 480px to
+   842px wide, and left at natural size a small one sits marooned in the
+   middle of a full-screen scrim. */
+#lightbox img {
+  display: block; width: auto; height: auto;
+  max-width: min(92vw, 1100px); max-height: 78vh;
+  background: #fbf6ea; box-shadow: 0 30px 70px -30px rgba(0,0,0,.9);
+}
+#lightbox figcaption {
+  margin: 0; max-width: min(92vw, 1100px);
+  font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px;
+  line-height: 1.6; color: #efe6d6; text-align: center;
+}
+#lightbox button {
+  position: absolute; top: clamp(12px,2.5vw,26px); right: clamp(12px,2.5vw,26px);
+  width: 42px; height: 42px; padding: 0; cursor: pointer;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.3);
+  border-radius: 50%; color: #f4ece0; font: 300 22px/1 'IBM Plex Sans', system-ui, sans-serif;
+}
+#lightbox button:hover { background: rgba(255,255,255,.2); }
 </style>
 </helmet>
 <main style="font-family:'IBM Plex Sans',system-ui,sans-serif;color:#25303c;background:#f1e3ce;overflow-x:hidden">
@@ -398,7 +434,7 @@ image-slot { pointer-events: none; }
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:clamp(22px,3vw,38px)">
       <figure data-reveal="" style="margin:0;background:#f7efe1;border:1px solid #e0cfb1;padding:10px 10px 16px;box-shadow:0 14px 28px -24px rgba(60,48,30,.85);transform:rotate(-1.1deg)">
-        <div style="position:relative;width:100%;aspect-ratio:4/3"><image-slot id="beyond-apec" shape="rect" fit="cover" placeholder="PLACEHOLDER — drop APEC / V-Hand photo"></image-slot></div>
+        <button type="button" class="beyond-shot" data-fit="cover" data-full="assets/beyond-apec.webp" data-caption="APEC Innovation 2025–2026 — first prize for V-Hand 2.0, the Sign Language Translator Glove" aria-label="Enlarge: APEC Innovation 2025–2026 — first prize for V-Hand 2.0, the Sign Language Translator Glove"><img src="assets/beyond-apec.webp" alt="Do Hung Anh holding up both V-Hand 2.0 sensor gloves, palms to camera" loading="lazy" decoding="async" /></button>
         <figcaption style="padding:14px 6px 0">
           <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;color:#5d7247">FIRST PRIZE</p>
           <p style="margin:7px 0 0;font-family:Newsreader,serif;font-size:17.5px;line-height:1.3;color:#1e2630">APEC Innovation 2025–2026</p>
@@ -406,21 +442,21 @@ image-slot { pointer-events: none; }
         </figcaption>
       </figure>
       <figure data-reveal="" style="margin:0;background:#f7efe1;border:1px solid #e0cfb1;padding:10px 10px 16px;box-shadow:0 14px 28px -24px rgba(60,48,30,.85);transform:rotate(.8deg)">
-        <div style="position:relative;width:100%;aspect-ratio:4/3"><image-slot id="beyond-usth" shape="rect" fit="cover" placeholder="PLACEHOLDER — drop USTH research photo"></image-slot></div>
+        <button type="button" class="beyond-shot" data-fit="cover" data-full="assets/beyond-usth.webp" data-caption="USTH Student Scientific Research Competition — consolation prize" aria-label="Enlarge: USTH Student Scientific Research Competition — consolation prize"><img src="assets/beyond-usth.webp" alt="The USTH team presenting their project at the student scientific research competition" loading="lazy" decoding="async" /></button>
         <figcaption style="padding:14px 6px 0">
           <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;color:#5d7247">CONSOLATION PRIZE</p>
           <p style="margin:7px 0 0;font-family:Newsreader,serif;font-size:17.5px;line-height:1.3;color:#1e2630">USTH Student Scientific Research Competition</p>
         </figcaption>
       </figure>
       <figure data-reveal="" style="margin:0;background:#f7efe1;border:1px solid #e0cfb1;padding:10px 10px 16px;box-shadow:0 14px 28px -24px rgba(60,48,30,.85);transform:rotate(-.6deg)">
-        <div style="position:relative;width:100%;aspect-ratio:4/3"><image-slot id="beyond-vnu" shape="rect" fit="cover" placeholder="PLACEHOLDER — drop VNU Olympiad photo"></image-slot></div>
+        <button type="button" class="beyond-shot" data-fit="contain" data-full="assets/beyond-vnu.webp" data-caption="VNU English Olympiad — consolation prize, English, 2021–2022" aria-label="Enlarge: VNU English Olympiad — consolation prize, English, 2021–2022"><img src="assets/beyond-vnu.webp" alt="VNU certificate of merit for the Hanoi National University English Olympiad, 2021–2022" loading="lazy" decoding="async" /></button>
         <figcaption style="padding:14px 6px 0">
           <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;color:#5d7247">CONSOLATION PRIZE</p>
           <p style="margin:7px 0 0;font-family:Newsreader,serif;font-size:17.5px;line-height:1.3;color:#1e2630">VNU English Olympiad</p>
         </figcaption>
       </figure>
       <figure data-reveal="" style="margin:0;background:#f7efe1;border:1px solid #e0cfb1;padding:10px 10px 16px;box-shadow:0 14px 28px -24px rgba(60,48,30,.85);transform:rotate(1.2deg)">
-        <div style="position:relative;width:100%;aspect-ratio:4/3"><image-slot id="beyond-macron" shape="rect" fit="cover" placeholder="PLACEHOLDER — drop USTH visit photo"></image-slot></div>
+        <button type="button" class="beyond-shot" data-fit="contain" data-full="assets/beyond-macron.webp" data-caption="USTH certificate of appreciation — coordination during President Emmanuel Macron’s visit, May 2025" aria-label="Enlarge: USTH certificate of appreciation — coordination during President Emmanuel Macron’s visit, May 2025"><img src="assets/beyond-macron.webp" alt="USTH certificate of appreciation for the official visit of the President of France, May 2025" loading="lazy" decoding="async" /></button>
         <figcaption style="padding:14px 6px 0">
           <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;color:#5d7247">CERTIFICATE OF APPRECIATION</p>
           <p style="margin:7px 0 0;font-family:Newsreader,serif;font-size:17.5px;line-height:1.3;color:#1e2630">Coordination during President Emmanuel Macron’s visit to USTH</p>
@@ -463,6 +499,12 @@ image-slot { pointer-events: none; }
     </div>
   </div>
 </section>
+<div id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Enlarged image">
+  <img alt="" />
+  <figcaption></figcaption>
+  <button type="button" data-lb-close aria-label="Close">&times;</button>
+</div>
+
 </main>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;showQuote&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;planeFlight&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;cloudDrift&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;gentle&quot;,&quot;slow&quot;,&quot;still&quot;],&quot;default&quot;:&quot;gentle&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Motion&quot;}}">
@@ -711,12 +753,92 @@ class Component extends DCLogic {
     queueFade();
   }, { passive: true });
 
-  /* pointer-events:none takes the slots out of hit-testing, so neither the
-     click nor the drop reaches them. This is the other half: without it the
-     browser's own default would still open a file dragged anywhere onto the
-     page, replacing the site with the image. */
+  /* The drop targets are gone with the slots, but the browser's own default
+     still opens a file dragged anywhere onto the page, replacing the site
+     with the image. */
   window.addEventListener('dragover', function (e) { e.preventDefault(); }, false);
   window.addEventListener('drop', function (e) { e.preventDefault(); }, false);
+
+  /* Lightbox for the Beyond frames. The certificates are only legible here:
+     in the card they are letterboxed into a 4:3 frame at thumbnail size.
+
+     Every node is looked up at call time and every listener is delegated to
+     the document, for the same reason mountGrass re-mounts above: the host
+     re-renders and swaps sections wholesale, so a reference cached at start
+     or a handler bound to a card stops firing after the first swap. */
+  (function () {
+    var opener = null;
+
+    function dialog() { return document.getElementById('lightbox'); }
+    function isOpen() { var d = dialog(); return !!(d && d.hasAttribute('data-open')); }
+
+    // Left at natural size a 480px photo sits marooned in a full-screen
+    // scrim; 2x is as far as these will stretch before they go to mush.
+    // The height budget has to come back through the aspect ratio: an
+    // explicit width plus a max-height squashes the portrait certificates
+    // instead of shrinking them.
+    function size() {
+      var d = dialog();
+      var img = d && d.querySelector('img');
+      if (!img || !img.naturalWidth) return;
+      var ratio = img.naturalWidth / img.naturalHeight;
+      img.style.width = Math.round(Math.min(
+        img.naturalWidth * 2,
+        1100,
+        window.innerWidth * 0.92,
+        window.innerHeight * 0.78 * ratio
+      )) + 'px';
+    }
+
+    function open(btn) {
+      var d = dialog();
+      if (!d) return;
+      var img = d.querySelector('img');
+      var thumb = btn.querySelector('img');
+      opener = btn;
+      img.style.width = '';
+      img.onload = size;
+      img.src = btn.getAttribute('data-full');
+      img.alt = (thumb && thumb.getAttribute('alt')) || '';
+      d.querySelector('figcaption').textContent = btn.getAttribute('data-caption') || '';
+      d.setAttribute('data-open', '');
+      document.body.style.overflow = 'hidden';
+      d.querySelector('[data-lb-close]').focus();
+      if (img.complete) size();
+    }
+
+    function close() {
+      var d = dialog();
+      if (!d) return;
+      d.removeAttribute('data-open');
+      document.body.style.overflow = '';
+      d.querySelector('img').removeAttribute('src');
+      if (opener && document.contains(opener)) opener.focus();
+    }
+
+    document.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      var d = dialog();
+      if (d && d.hasAttribute('data-open') && d.contains(t)) {
+        // Anything that is not the photograph closes: scrim, caption, button.
+        if (t !== d.querySelector('img')) close();
+        return;
+      }
+      var btn = t.closest('.beyond-shot');
+      if (btn) open(btn);
+    });
+
+    window.addEventListener('resize', function () { if (isOpen()) size(); }, { passive: true });
+
+    document.addEventListener('keydown', function (e) {
+      if (!isOpen()) return;
+      if (e.key === 'Escape') close();
+      // The dialog holds one focusable control, so the trap is to keep
+      // sending Tab back to it rather than out into the page behind.
+      if (e.key === 'Tab') { e.preventDefault(); dialog().querySelector('[data-lb-close]').focus(); }
+    });
+  })();
 })();
 </script>
 </body>

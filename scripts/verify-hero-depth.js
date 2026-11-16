@@ -1,4 +1,4 @@
-// Checks the depth hero (hero-depth.js) and the drawn grass band (grass-band.js)
+// Checks the depth hero (hero-depth.js) and the meadow band (grass-band.js)
 // against a local server on :3000.
 //   python3 -m http.server 3000 & node scripts/verify-hero-depth.js
 // Exits non-zero on the first failed check. Screenshots go to $OUT or ./.
@@ -108,8 +108,9 @@ async function meanDiff(page, a, b) {
     await context.close();
   }
 
-  // Closing grass band (grass-band.js): drawn on every viewport, sways unless
-  // reduced motion, tips stand against the sky, the plate fallback is hidden.
+  // Closing meadow band (grass-band.js): drawn on every viewport as a still,
+  // solid at the foot with sky above its rolling crest, the plate fallback
+  // hidden.
   const bandState = (page) => page.evaluate(() => {
     const c = document.querySelector('#contact canvas.grass-band');
     const img = document.querySelector('#contact img.horizon-grass');
@@ -131,14 +132,13 @@ async function meanDiff(page, a, b) {
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await page.waitForTimeout(1500);
     const a = await bandState(page);
-    check(a !== null, `${name}: grass band canvas mounted`);
+    check(a !== null, `${name}: meadow band canvas mounted`);
     if (a) {
       check(a.imgHidden, `${name}: plate fallback hidden under the drawn band`);
-      check(a.bottom > 0.98 && a.top < 0.2, `${name}: solid meadow at the foot, sky between tips at the top (bottom ${a.bottom.toFixed(2)}, top ${a.top.toFixed(2)})`);
+      check(a.bottom > 0.98 && a.top < 0.2, `${name}: solid meadow at the foot, sky above the crest (bottom ${a.bottom.toFixed(2)}, top ${a.top.toFixed(2)})`);
       await page.waitForTimeout(600);
       const b = await bandState(page);
-      const moving = b.sum !== a.sum;
-      check(name === 'reduced motion' ? !moving : moving, `${name}: band ${name === 'reduced motion' ? 'holds still' : 'sways'}`);
+      check(b.sum === a.sum, `${name}: band holds still`);
     }
     if (name === 'desktop') await page.screenshot({ path: path.join(OUT, 'grass-desktop.png') });
     check(webm.length === 0, `${name}: no video requested`);

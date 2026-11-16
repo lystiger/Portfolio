@@ -99,11 +99,12 @@ magick -size 1376x768 xc:white -fill black -draw "polygon $meadow" -draw "polygo
   -morphology Erode Disk:18 -blur 0x8 -resize 344x192 "$tmp/b.png"
 magick "$tmp/r.png" "$tmp/g.png" "$tmp/b.png" -combine -depth 8 "$out/depth.png"
 
-# Closing grass band texture (grass-band.js): the clean plate's flat meadow,
-# 516x68+860+700, made to tile by crossfading its last 80px over its first.
-magick hero-bg-clean.webp -crop 516x68+860+700 +repage "$tmp/strip.png"
-magick "$tmp/strip.png" -crop 436x68+0+0 +repage \
-  \( "$tmp/strip.png" -crop 80x68+436+0 +repage \( -size 68x80 gradient:black-white -rotate 90 \) \
+# Closing meadow band texture (grass-band.js): the clean plate's meadow below
+# the hill line, 456x88+920+680 (clear of the trees on its left), made to
+# tile by crossfading its last 80px over its first.
+magick hero-bg-clean.webp -crop 456x88+920+680 +repage "$tmp/strip.png"
+magick "$tmp/strip.png" -crop 376x88+0+0 +repage \
+  \( "$tmp/strip.png" -crop 80x88+376+0 +repage \( -size 88x80 gradient:black-white -rotate 90 \) \
      -alpha off -compose CopyOpacity -composite \) \
   -compose over -composite -quality 90 meadow-strip.webp
 

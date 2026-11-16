@@ -26,6 +26,10 @@
 <meta name="twitter:description" content="I build practical AI systems, from factory floors to personal tools, with a belief that technology can make everyday life a little more human. Selected work in AI/ML, MLOps and production observability." />
 <meta name="twitter:image" content="https://portfolio-lystiger.vercel.app/assets/og-cover.jpg" />
 <script src="./support.js"></script>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.min.js" } }
+</script>
+<script type="module" src="./hero-depth.js"></script>
 </head>
 <body>
 <x-dc>
@@ -123,6 +127,15 @@ a:hover { color:#5d7247; }
   object-fit:cover; object-position:right bottom;
   display:block; user-select:none; z-index:1;
 }
+/* hero-depth.js redraws the plate in depth over .hero-base on desktop. It
+   fades in once its first frame is drawn, so the <img> is what shows until
+   then, and what stays on phones, under reduced motion and without WebGL. */
+.hero-depth {
+  position:absolute; inset:0; width:100%; height:100%; display:block; z-index:2;
+  opacity:0; transition:opacity .6s ease;
+}
+.hero-depth.is-ready { opacity:1; }
+@media (max-width:768px), (prefers-reduced-motion: reduce) { .hero-depth { display:none; } }
 
 
 /* Mobile: reframe the landscape illustration so the figure is centred

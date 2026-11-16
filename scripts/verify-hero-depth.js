@@ -1,4 +1,5 @@
-// Checks the depth hero (hero-depth.js) against a local server on :3000.
+// Checks the depth hero (hero-depth.js) and the drawn grass band (grass-band.js)
+// against a local server on :3000.
 //   python3 -m http.server 3000 & node scripts/verify-hero-depth.js
 // Exits non-zero on the first failed check. Screenshots go to $OUT or ./.
 const { chromium } = require('playwright');
@@ -104,6 +105,44 @@ async function meanDiff(page, a, b) {
     await page.waitForTimeout(3000);
     check(threeRequests.length === 0, 'reduced motion: three.js never requested');
     check(await page.$('canvas.hero-depth') === null, 'reduced motion: no canvas');
+    await context.close();
+  }
+
+  // Closing grass band (grass-band.js): drawn on every viewport, sways unless
+  // reduced motion, tips stand against the sky, the plate fallback is hidden.
+  const bandState = (page) => page.evaluate(() => {
+    const c = document.querySelector('#contact canvas.grass-band');
+    const img = document.querySelector('#contact img.horizon-grass');
+    if (!c) return null;
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    const rowAlpha = (y) => { let s = 0; for (let x = 0; x < c.width; x++) s += d[(y * c.width + x) * 4 + 3]; return s / c.width / 255; };
+    let sum = 0;
+    for (let i = 3; i < d.length; i += 40) sum += d[i];
+    return { top: rowAlpha(1), bottom: rowAlpha(c.height - 2), sum, imgHidden: getComputedStyle(img).visibility === 'hidden' };
+  });
+  for (const [name, opts] of [
+    ['desktop', { viewport: { width: 1440, height: 900 } }],
+    ['phone', { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch: true }],
+    ['reduced motion', { viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' }],
+  ]) {
+    const { context, page, errors } = await open(browser, opts);
+    const webm = [];
+    page.on('request', (r) => { if (r.url().endsWith('.webm')) webm.push(r.url()); });
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await page.waitForTimeout(1500);
+    const a = await bandState(page);
+    check(a !== null, `${name}: grass band canvas mounted`);
+    if (a) {
+      check(a.imgHidden, `${name}: plate fallback hidden under the drawn band`);
+      check(a.bottom > 0.98 && a.top < 0.2, `${name}: solid meadow at the foot, sky between tips at the top (bottom ${a.bottom.toFixed(2)}, top ${a.top.toFixed(2)})`);
+      await page.waitForTimeout(600);
+      const b = await bandState(page);
+      const moving = b.sum !== a.sum;
+      check(name === 'reduced motion' ? !moving : moving, `${name}: band ${name === 'reduced motion' ? 'holds still' : 'sways'}`);
+    }
+    if (name === 'desktop') await page.screenshot({ path: path.join(OUT, 'grass-desktop.png') });
+    check(webm.length === 0, `${name}: no video requested`);
+    check(errors.length === 0, `${name}: no console errors` + (errors.length ? ': ' + errors.join(' | ') : ''));
     await context.close();
   }
 

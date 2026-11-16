@@ -26,6 +26,11 @@
 <meta name="twitter:description" content="I build practical AI systems, from factory floors to personal tools, with a belief that technology can make everyday life a little more human. Selected work in AI/ML, MLOps and production observability." />
 <meta name="twitter:image" content="https://portfolio-lystiger.vercel.app/assets/og-cover.jpg" />
 <script src="./support.js"></script>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.min.js" } }
+</script>
+<script type="module" src="./hero-depth.js"></script>
+<script src="./grass-band.js" defer></script>
 </head>
 <body>
 <x-dc>
@@ -45,13 +50,15 @@ a:hover { color:#5d7247; }
 @keyframes drift { from { transform:translate3d(-34vw,0,0); } to { transform:translate3d(132vw,0,0); } }
 @keyframes fadeup { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
 @keyframes draw { from { stroke-dashoffset:1; } to { stroke-dashoffset:0; } }
-/* Closing grass band. The plate is 2172x724 drawn full-bleed, so `cover`
+/* Closing grass band. grass-band.js draws it on a canvas that takes the
+   .horizon-grass box; the <img> below it is the no-JS fallback, hidden once
+   the canvas has drawn. The plate is 2172x724 drawn full-bleed, so `cover`
    scales it by width and a fixed pixel height then crops a shrinking slice
    of it as the viewport widens: readable at 390px, but by 1440px only the
    root mass survives and the band ends in a straight guillotined line.
-   Height therefore tracks viewport width, and the top edge is masked so
-   blades dissolve into the sky instead of being cut off. */
-.horizon-grass, .horizon-grass-video {
+   Height therefore tracks viewport width, and the fallback's top edge is
+   masked so blades dissolve into the sky instead of being cut off. */
+.horizon-grass {
   position: absolute;
   left: 0;
   bottom: -1px;
@@ -62,46 +69,10 @@ a:hover { color:#5d7247; }
   pointer-events: none;
   z-index: 2;
 }
-/* Both band layers carry this fade. The still needs it as much as the loop
-   does: `cover` crops the plate to its bottom fifth at desktop widths, so
-   an unmasked still ends in a straight line of sliced-off blades, and it
-   shows through the loop's own faded top edge.
-
-   The fade is applied to a wrapper, never to the <video> itself. A mask on
-   a video element is dropped by some GPU compositors — the media decodes
-   and plays but paints nothing — while the identical mask on a wrapper (or
-   on an <img>) composites correctly. */
 .grass-mask {
   -webkit-mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.8) 30%, #000 64%);
           mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,.8) 30%, #000 64%);
 }
-/* Scoped to the loop's wrapper: .horizon-grass carries .grass-mask too, and
-   an unscoped height:100% here would override its clamped band height. */
-.horizon-grass-video > .grass-mask,
-.grass-mask > video {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: bottom center;
-}
-/* The plate is painterly and soft at its own resolution, and `cover` then
-   draws it at roughly 1.3x on a 2x display, so the band reads mushy. The
-   still is sharpened in the asset itself; the loop cannot be, because
-   re-encoding it through ffmpeg drops the VP9 alpha channel and bakes the
-   matte fringe into the sky. A convolution at paint time is the only pass
-   left for the moving layer. It sits on the outer element, never on the
-   masked one — filter and mask on a single video wrapper is the pairing
-   that GPU compositors have dropped here before. */
-.grass-sharpen { filter: url(#grass-sharpen); }
-@supports not (filter: url(#grass-sharpen)) {
-  .grass-sharpen { filter: contrast(1.08) saturate(1.05); }
-}
-/* The video carries the per-blade motion; the still underneath is what
-   shows on mobile, in reduced motion, and wherever VP9 alpha will not
-   decode. The old CSS skew is gone: a 0.45deg shear across a 1455px-wide
-   element moved the blades by a fraction of a pixel. */
-.horizon-grass-video { z-index: 3; overflow: hidden; }
 
 /* ── Hero layered media ─────────────────────────────────────────────
    #home draws one decorative layer below the HTML copy: .hero-base, the
@@ -123,6 +94,15 @@ a:hover { color:#5d7247; }
   object-fit:cover; object-position:right bottom;
   display:block; user-select:none; z-index:1;
 }
+/* hero-depth.js redraws the plate in depth over .hero-base on desktop. It
+   fades in once its first frame is drawn, so the <img> is what shows until
+   then, and what stays on phones, under reduced motion and without WebGL. */
+.hero-depth {
+  position:absolute; inset:0; width:100%; height:100%; display:block; z-index:2;
+  opacity:0; transition:opacity .6s ease;
+}
+.hero-depth.is-ready { opacity:1; }
+@media (max-width:768px), (prefers-reduced-motion: reduce) { .hero-depth { display:none; } }
 
 
 /* Mobile: reframe the landscape illustration so the figure is centred
@@ -151,8 +131,6 @@ a:hover { color:#5d7247; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior:auto; }
   *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
-  /* The plate is already a complete still, so the moving layer just goes. */
-  .horizon-grass-video { display:none !important; }
 }
 
 /* Beyond frames. The two photographs fill their 4:3 frame. The two
@@ -510,13 +488,7 @@ a:hover { color:#5d7247; }
     <div class="cloud" style="position:absolute;top:14%;left:0;width:480px;height:160px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.8),rgba(255,255,255,0));filter:blur(18px);animation:drift 280s linear infinite;animation-delay:-60s"></div>
     <div class="cloud" style="position:absolute;top:40%;left:0;width:340px;height:120px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.62),rgba(255,255,255,0));filter:blur(20px);animation:drift 340s linear infinite;animation-delay:-210s"></div>
   </div>
-  <svg aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute">
-    <filter id="grass-sharpen" x="0" y="0" width="100%" height="100%">
-      <feConvolveMatrix order="3" preserveAlpha="true" kernelMatrix="0 -0.45 0 -0.45 2.8 -0.45 0 -0.45 0" />
-    </filter>
-  </svg>
   <img src="assets/horizon-grass.webp" class="horizon-grass grass-mask" alt="" aria-hidden="true" loading="lazy" decoding="async" />
-  <div class="horizon-grass-video grass-sharpen" aria-hidden="true"><div class="grass-mask"><video data-grass-loop data-src="assets/hero-grass-loop.webm" width="1920" height="266" muted loop playsinline autoplay preload="none" disablepictureinpicture></video></div></div>
   <div aria-hidden="true" style="position:absolute;inset:0;z-index:3;pointer-events:none;background-image:var(--grain);background-size:160px 160px;opacity:.07;mix-blend-mode:overlay"></div>
 
   <div style="position:relative;z-index:4;max-width:1180px;margin:0 auto;width:100%;padding:clamp(70px,9vw,120px) clamp(22px,6vw,64px) clamp(90px,11vw,150px)">
@@ -645,44 +617,12 @@ class Component extends DCLogic {
 }
 </script>
 <script>
-/* Hero foreground media driver.
-   Two jobs, both no-ops under prefers-reduced-motion:
-     1. Attach each grass loop's source only on viewports that will play it,
-        so phones never download the file.
-     2. Fade the hero copy out as the hero scrolls away.
+/* Hero copy fade, a no-op under prefers-reduced-motion.
    The host re-renders #home from a template, which strips classes and
    data-attributes set from script, so state lives on expando properties and
-   the media are re-primed on every pass. */
+   is re-applied on every pass. */
 (function () {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  function mountGrass() {
-    if (!window.matchMedia('(min-width: 769px)').matches) return;
-    // Both bands share one file, so the second element is a cache hit.
-    var videos = document.querySelectorAll('[data-grass-loop]');
-    for (var i = 0; i < videos.length; i++) {
-      var video = videos[i];
-      // The `muted` content attribute only initialises the muted property
-      // when the parser builds the element. The host rebuilds the hero from
-      // a template, so these nodes arrive with muted === false, and Chrome
-      // refuses to autoplay an unmuted video: play() rejects and the band
-      // never paints. `loop` goes the same way, leaving the band frozen on
-      // its last frame. Set the properties directly, every pass.
-      video.muted = true;
-      video.defaultMuted = true;
-      video.playsInline = true;
-      video.loop = true;
-      if (!video.getAttribute('src')) video.src = video.dataset.src;
-      if (video.paused) {
-        var attempt = video.play();
-        // Autoplay can still be refused (Low Power Mode, a browser setting)
-        // and Safari does not decode VP9 alpha at all. Both leave the layer
-        // blank over grass that is already painted underneath, so no
-        // fallback beyond the still is needed.
-        if (attempt && attempt.catch) attempt.catch(function () {});
-      }
-    }
-  }
 
   /* Hero copy fade.
      Replaces the scrubbed GSAP timeline the WebGL bundle used to run: the
@@ -755,39 +695,24 @@ class Component extends DCLogic {
   }
 
   function onHostRender() {
-    mountGrass();
     lastProgress = -1;  // force a re-apply onto the fresh nodes
     queueFade();
   }
 
-  function start() {
-    mountGrass();
-    // Re-run briefly: the host may swap the hero for a freshly built node
-    // after load, and the replacement needs muting and starting again.
-    var settles = 0;
-    var settle = setInterval(function () {
-      mountGrass();
-      if (++settles > 10) clearInterval(settle);
-    }, 700);
-    queueFade();
-  }
-
-  // Waiting for `load` puts the first mount after the host's initial
-  // re-render, so the source is attached to the node that survives.
+  // Waiting for `load` puts the first pass after the host's initial
+  // re-render, so the fade lands on the nodes that survive.
   if (document.readyState === 'complete') {
-    start();
+    queueFade();
   } else {
-    window.addEventListener('load', start, { once: true });
+    window.addEventListener('load', queueFade, { once: true });
   }
   // The host renders the hero client-side and may swap #home wholesale, in
-  // which case the mounted <video> is replaced by a fresh, unmounted one and
-  // the faded copy is replaced by pristine markup.
+  // which case the faded copy is replaced by pristine markup.
   new MutationObserver(onHostRender).observe(document.documentElement, {
     childList: true, subtree: true
   });
   window.addEventListener('scroll', queueFade, { passive: true });
   window.addEventListener('resize', function () {
-    mountGrass();
     lastProgress = -1;
     queueFade();
   }, { passive: true });
@@ -811,7 +736,7 @@ window.addEventListener('drop', function (e) { e.preventDefault(); }, false);
    in the card they are letterboxed into a 4:3 frame at thumbnail size.
 
    Every node is looked up at call time and every listener is delegated to
-   the document, for the same reason mountGrass re-mounts above: the host
+   the document, for the same reason the hero fade re-applies above: the host
    re-renders and swaps sections wholesale, so a reference cached at start
    or a handler bound to a card stops firing after the first swap. */
 (function () {

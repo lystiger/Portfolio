@@ -4,7 +4,8 @@
    scroll position shift each depth by a different amount. One wind drives
    the scene: the clouds drift and billow, the meadow sways, and the windsock
    fills and flaps with the same gusts. Every minute or so the plane crosses
-   the sky, drawing its contrail, and passes behind the hangar.
+   the sky, drawing its contrail, and passes behind the hangar. The same
+   wind stirs Jiro's hair, and every few seconds he blinks.
 
    Layers come from scripts/build-hero-layers.sh, all cut from
    hero-master-bg.jpg itself, so the canvas draws the same picture the <img>
@@ -32,6 +33,14 @@ const ZOOM = 1.045;
 // match the crops in scripts/build-hero-layers.sh.
 const PLANE_RECT = [596, 98, 110, 44];
 const SOCK_RECT = [1158, 331, 100, 64];
+const HAIR_RECT = [890, 210, 175, 90];
+// The eye, in plate pixels: a dark stroke behind the lens. A blink paints
+// the lid down over this ellipse with skin taken from just right of it.
+const EYE = [926.5, 306.5, 5.5, 7.0];   // centre x, y, radius x, y
+// Blink timing, in seconds: close, hold, open; then a 2.5-6s pause, and one
+// blink in five is doubled.
+const BLINK = [0.07, 0.04, 0.11];
+const BLINK_GAP = [2.5, 6];
 // Flight timing, in seconds.
 const FLIGHT = 16;          // right edge to top edge
 const TRAIL_FADE = 7;       // contrail lingers this long after
@@ -59,6 +68,10 @@ const fragmentShader = /* glsl */ `
   uniform float uScroll;   // 0 at rest, 1 once the hero has scrolled away
   uniform float uTime;
   uniform float uFlight;   // seconds since the plane set off, or -1
+  uniform sampler2D uHair;
+  uniform vec4 uHairRect;
+  uniform vec4 uEye;
+  uniform float uBlink;    // 0 open .. 1 shut
   varying vec2 vUv;
 
   const vec2 PLATE = vec2(1376.0, 768.0);
@@ -147,7 +160,30 @@ const fragmentShader = /* glsl */ `
       color = mix(color, sock.rgb, sock.a);
     }
 
-    vec4 figure = texture2D(uFigure, uv - uPointer * 0.017);
+    // Figure. Its hair stirs in the wind: pushed with the gusts and
+    // fluttering, the tufts most and the scalp not at all (hair.png).
+    vec2 figPx = toPx(uv - uPointer * 0.017);
+    float hair = sprite(uHair, uHairRect, figPx).r;
+    vec2 stir = hair * vec2(
+      gust * 2.2 + sin(t * 3.3 + figPx.y * 0.15) * 0.9,
+      -sin(t * 2.7 + figPx.x * 0.1) * 0.6);
+    vec2 samplePx = figPx - stir;
+    vec4 figure = texture2D(uFigure, vec2(samplePx.x, PLATE.y - samplePx.y) / PLATE);
+
+    // Blink: the lid comes down over the eye's ellipse, skin above the lid
+    // line taken from just right of the eye, an inked lash along it.
+    if (uBlink > 0.0) {
+      vec2 e = (figPx - uEye.xy) / uEye.zw;
+      if (dot(e, e) < 1.0) {
+        float lid = uEye.y - uEye.w + uBlink * 2.0 * uEye.w;
+        vec2 skinPx = figPx + vec2(9.0, 0.0);
+        vec4 skin = texture2D(uFigure, vec2(skinPx.x, PLATE.y - skinPx.y) / PLATE);
+        if (figPx.y < lid) figure.rgb = skin.rgb;
+        float lash = 1.0 - smoothstep(0.4, 1.1, abs(figPx.y - lid));
+        // Linear colour, as the textures are decoded: about #3F3027 on screen.
+        figure.rgb = mix(figure.rgb, vec3(0.05, 0.03, 0.02), lash * 0.85 * step(0.15, uBlink));
+      }
+    }
     gl_FragColor = vec4(mix(color, figure.rgb, figure.a), 1.0);
     #include <colorspace_fragment>
   }`;
@@ -179,14 +215,15 @@ async function start() {
     t.generateMipmaps = false;
     return t;
   });
-  let back, figure, depth, plane, sock;
+  let back, figure, depth, plane, sock, hair;
   try {
-    [back, figure, depth, plane, sock] = await Promise.all([
+    [back, figure, depth, plane, sock, hair] = await Promise.all([
       load('assets/hero-depth/back.webp', true),
       load('assets/hero-depth/figure.webp', true),
       load('assets/hero-depth/depth.png', false),
       load('assets/hero-depth/plane.webp', true),
       load('assets/hero-depth/sock.webp', true),
+      load('assets/hero-depth/hair.png', false),
     ]);
   } catch (e) {
     renderer.dispose();
@@ -201,6 +238,10 @@ async function start() {
     uSock: { value: sock },
     uPlaneRect: { value: new THREE.Vector4(...PLANE_RECT) },
     uSockRect: { value: new THREE.Vector4(...SOCK_RECT) },
+    uHair: { value: hair },
+    uHairRect: { value: new THREE.Vector4(...HAIR_RECT) },
+    uEye: { value: new THREE.Vector4(...EYE) },
+    uBlink: { value: 0 },
     uFlight: { value: -1 },
     uScale: { value: new THREE.Vector2(1, 1) },
     uOrigin: { value: new THREE.Vector2(0, 0) },
@@ -271,6 +312,17 @@ async function start() {
   // The scene clock only runs while the hero is drawn, so a flight never
   // happens unseen; the next one is booked once the last trail has faded.
   let flightAt = FIRST_FLIGHT;
+  let blinkAt = 1.5;
+  let blinkTwice = false;
+  const BLINK_LENGTH = BLINK[0] + BLINK[1] + BLINK[2];
+
+  // Lid position for a blink that started `s` seconds ago: 0 open, 1 shut.
+  function lid(s) {
+    if (s < 0 || s > BLINK_LENGTH) return 0;
+    if (s < BLINK[0]) return s / BLINK[0];
+    if (s < BLINK[0] + BLINK[1]) return 1;
+    return 1 - (s - BLINK[0] - BLINK[1]) / BLINK[2];
+  }
 
   function frame(now) {
     if (!visible || document.hidden || !canvas.isConnected) {
@@ -285,6 +337,13 @@ async function start() {
       flightAt = t + FLIGHT_GAP[0] + Math.random() * (FLIGHT_GAP[1] - FLIGHT_GAP[0]);
     }
     uniforms.uFlight.value = t >= flightAt ? t - flightAt : -1;
+
+    if (t > blinkAt + BLINK_LENGTH * 2.5) {
+      blinkAt = t + BLINK_GAP[0] + Math.random() * (BLINK_GAP[1] - BLINK_GAP[0]);
+      blinkTwice = Math.random() < 0.2;
+    }
+    uniforms.uBlink.value = Math.max(lid(t - blinkAt),
+      blinkTwice ? lid(t - blinkAt - BLINK_LENGTH * 1.4) : 0);
 
     // Until the pointer moves, drift gently so the depth reads on its own.
     const tx = pointerSeen ? target.x : Math.sin(t * 0.21) * 0.35;

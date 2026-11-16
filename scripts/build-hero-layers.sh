@@ -18,12 +18,14 @@
 #   master ──figure mask──> figure.webp  (near layer, RGBA)
 #   master ──plate diff───> plane.webp   (sprite, RGBA)
 #   master ──sock polygon─> sock.webp    (sprite, RGBA)
+#   master ──dark hair × radial ramp──> hair.png  (stir weight, gray)
 #   master + clean + inpaint ──> back.webp  (sky, clouds, hangar, meadow)
 #   hand-drawn polygons ──blur──> depth.png
 #       R depth 0 far..1 near, G meadow (wind), B open sky (cloud drift)
 #
 # Coordinates are in plate pixels (1376x768), read off grid overlays. The
-# sprite rectangles are repeated in hero-depth.js (PLANE_RECT, SOCK_RECT).
+# sprite rectangles are repeated in hero-depth.js (PLANE_RECT, SOCK_RECT,
+# HAIR_RECT).
 set -euo pipefail
 cd "$(dirname "$0")/../assets"
 out=hero-depth
@@ -31,7 +33,16 @@ mkdir -p "$out"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
-magick layer-character-full.png -alpha extract -threshold 50% "$tmp/mask.png"
+# Figure silhouette: the repaint's alpha, grown by the master's own dark hair
+# pixels around the head (175x125+890+210, down past the nape). The repaint
+# misses some of the master's wisps; left in the back layer they stay put as
+# ghost strands when the hair stirs or the figure shifts.
+magick hero-master-bg.jpg -crop 175x125+890+210 +repage -colorspace Gray -threshold 52% -negate "$tmp/hdark.png"
+magick hero-master-bg.jpg -crop 175x125+890+210 +repage -fx "(b>g+0.06 && b>r+0.06)?0:1" "$tmp/hnotsky.png"
+magick "$tmp/hdark.png" "$tmp/hnotsky.png" -compose multiply -composite -morphology Close Disk:1 -morphology Dilate Disk:1 "$tmp/hairpx.png"
+magick layer-character-full.png -alpha extract -threshold 50% \
+  \( -size 1376x768 xc:black "$tmp/hairpx.png" -geometry +890+210 -compose over -composite \) \
+  +geometry -compose lighten -composite "$tmp/mask.png"
 
 # Near layer: the master's own pixels inside the silhouette, 1px grown and
 # softened so the edge antialiases instead of stair-stepping.
@@ -61,7 +72,14 @@ magick hero-master-bg.jpg -crop 100x64+1158+331 +repage \
 # and the holes filled from their surroundings. The contrail's last stretch
 # (x >= 850) runs into a cloud, where a blur fill drags cloud colour into
 # the blue and leaves a ghost trail, so that stretch takes the clean plate's
-# cloud instead.
+# cloud instead. Around the head (above y 335) the clean plate keeps a grey,
+# head-shaped shadow in its clouds, which the hair stir and the parallax
+# uncover. There the back layer keeps the master's own sky, so the hero at
+# rest is unchanged. Under the silhouette (grown 5px, past the antialiased
+# hair edge, which would otherwise smear into the fill) the hole is filled
+# from its own edges, so stirring hair uncovers the local cloud colour, and
+# more than ~10px in with the master's cumulus 120px above the head, so a
+# bigger parallax shift uncovers cloud texture rather than a flat smear.
 magick hero-master-bg.jpg hero-bg-clean.webp \( "$tmp/mask.png" -morphology Dilate Disk:14 -blur 0x3 \) \
   -compose over -composite "$tmp/back-a.png"
 magick "$tmp/plane-diff.png" -morphology Open Disk:1 -morphology Dilate Disk:4 "$tmp/trail.png"
@@ -69,13 +87,35 @@ magick "$tmp/trail.png" -fill black -draw "rectangle 0,0 849,767" "$tmp/trail-cl
 magick "$tmp/trail.png" -fill black -draw "rectangle 850,0 1375,767" "$tmp/trail-sky.png"
 magick "$tmp/back-a.png" hero-bg-clean.webp \( "$tmp/trail-cloud.png" -blur 0x2 \) \
   -compose over -composite "$tmp/back-b.png"
-magick "$tmp/back-b.png" \( "$tmp/trail-sky.png" \( "$tmp/sock.png" -morphology Dilate Disk:3 \) \
+magick "$tmp/mask.png" -morphology Dilate Disk:14 -fill black -draw "rectangle 0,335 1375,767" -blur 0x3 "$tmp/head14.png"
+magick "$tmp/mask.png" -morphology Dilate Disk:5 -fill black -draw "rectangle 0,335 1375,767" -blur 0x1 "$tmp/head4.png"
+magick "$tmp/back-b.png" hero-master-bg.jpg "$tmp/head14.png" -compose over -composite "$tmp/back-r.png"
+magick "$tmp/back-r.png" \( "$tmp/head4.png" -negate \) -alpha off -compose CopyOpacity -composite "$tmp/head-holed.png"
+magick \( "$tmp/head-holed.png" -resize 1% -resize 1376x768! \) \
+       \( "$tmp/head-holed.png" -resize 3% -resize 1376x768! \) \
+       \( "$tmp/head-holed.png" -resize 8% -resize 1376x768! \) \
+       \( "$tmp/head-holed.png" -resize 25% -resize 1376x768! \) \
+       "$tmp/head-holed.png" -background none -flatten -alpha off "$tmp/head-fill.png"
+magick "$tmp/head4.png" -morphology Erode Disk:10 -blur 0x4 "$tmp/head-deep.png"
+magick "$tmp/head-fill.png" \( hero-master-bg.jpg -roll +0+120 \) "$tmp/head-deep.png" \
+  -compose over -composite "$tmp/back-c.png"
+magick "$tmp/back-c.png" \( "$tmp/trail-sky.png" \( "$tmp/sock.png" -morphology Dilate Disk:3 \) \
   -compose lighten -composite -negate \) \
   -alpha off -compose CopyOpacity -composite "$tmp/holed.png"
 magick \( "$tmp/holed.png" -resize 2% -resize 1376x768! \) \
        \( "$tmp/holed.png" -resize 8% -resize 1376x768! \) \
        \( "$tmp/holed.png" -resize 25% -resize 1376x768! \) \
        "$tmp/holed.png" -background none -flatten -alpha off -quality 88 "$out/back.webp"
+
+# Hair weight for the stir, HAIR_RECT 175x90+890+210 around the head: the
+# dark, non-sky pixels, weighted from 0 near the scalp (70,58 in the crop)
+# to 1 at the tufts 50px out. Behind the head (crop x >= 60) it fades out
+# below row 55, so the hair over the neck never tears against the skin; the
+# brows and glasses (bottom-left) are masked out.
+magick -size 175x90 xc: -fx "min(1,max(0,(hypot(i-70,j-58)-28)/22)) * (i<60 ? 1 : min(1,max(0,(75-j)/20)))" "$tmp/hramp.png"
+magick "$tmp/hairpx.png" -crop 175x90+0+0 +repage \
+  -fill black -draw "rectangle 0,76 70,89" \
+  "$tmp/hramp.png" -compose multiply -composite -blur 0x1 -colorspace Gray -depth 8 "$out/hair.png"
 
 # Depth: sky 0; hangar and trees 0.65, the same as the meadow at the hill line
 # (a depth step between them bends the hangar's walls); meadow rising to 0.85

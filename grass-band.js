@@ -1,31 +1,36 @@
 /* Closing grass band, drawn.
    Replaces the photographic plate and its VP9 loop at the foot of #contact
-   with blades painted the way the hero's meadow is: flat greens, a darker
-   ink edge, tips standing clear against the sky instead of fading into a
-   masked haze. Two rows; the far one is shorter and takes on the sky's
-   colour. The wind leans everything right, the way the hero's windsock
-   points, in gusts that travel across the band.
+   with the hero's own meadow: its painted grass, cut from the plate as
+   assets/meadow-strip.webp and tiled along the foot of the band, with drawn
+   blades in its palette rising out of it, tips standing clear against the
+   sky. Behind the texture a dense far row makes the horizon; in front, a
+   sparser near row with an ink edge. The wind leans everything right, the
+   way the hero's windsock points, in gusts that travel across the band.
 
    Canvas 2D, no library, so phones get it too. Under reduced motion it
    draws one still frame. The <img> under it stays as the no-JS fallback
    and is hidden once the canvas has drawn. */
 (function () {
   var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Colours sampled from the plate's meadow (dark #5F7343 to lit #BBBE84).
   var SKY = [182, 210, 223];          // section colour at the band's height
-  var INK = 'rgba(46, 72, 36, 0.55)'; // blade edge, as on the hero meadow
-  var SUN = [204, 212, 122];          // the yellow-green the hero's lit tips take
+  var INK = 'rgba(58, 78, 42, 0.6)';  // blade edge, as on the hero meadow
+  var SUN = [187, 190, 132];          // the plate's lit tips
 
   // Far row then near row: tip height as a fraction of the band, blade
   // spacing in CSS px, base and tip colours, how far toward the sky colour
   // the row is hazed, and how much of the row's tips catch the sun.
   var ROWS = [
-    { min: 0.42, max: 0.72, gap: 4, base: [92, 132, 64], tip: [170, 192, 104], haze: 0.25, sun: 0.3, ink: false },
-    { min: 0.58, max: 1.0, gap: 4, base: [52, 92, 40], tip: [130, 168, 70], haze: 0, sun: 0.7, ink: true },
+    { min: 0.45, max: 0.78, gap: 4, base: [116, 136, 82], tip: [170, 174, 100], haze: 0.2, sun: 0.4, ink: false },
+    { min: 0.55, max: 1.0, gap: 10, base: [95, 115, 67], tip: [152, 163, 93], haze: 0, sun: 0.7, ink: true },
   ];
-  // Solid meadow under the roots, so no sky shows between blade bases.
-  var GROUND = 0.4;
+  // The painted meadow under the roots, as a fraction of the band's height;
+  // its top edge fades in over the far row.
+  var GROUND = 0.6;
+  var STRIP = 'assets/meadow-strip.webp';
+  var STRIP_HEIGHT = 68;
 
-  var canvas, ctx, band, img, ground, blades = [], width = 0, height = 0, visible = true, running = false;
+  var canvas, ctx, band, img, ground, strip, blades = [], width = 0, height = 0, visible = true, running = false;
 
   // Deterministic, so the band looks the same on every visit and resize.
   function rng(seed) {
@@ -49,12 +54,40 @@
     canvas.height = Math.round(height * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Between the rows: fades in from the far row's colour so its top edge
-    // reads as more meadow, not as a band.
-    ground = ctx.createLinearGradient(0, height * (1 - GROUND), 0, height);
-    ground.addColorStop(0, 'rgba(92, 132, 64, 0)');
-    ground.addColorStop(0.45, 'rgb(74, 112, 52)');
-    ground.addColorStop(1, 'rgb(48, 84, 38)');
+    // Between the rows: the painted strip, tiled at the ground's height and
+    // faded in at the top so it grows out of the far row. Built once per
+    // layout on its own canvas; a plain olive fill stands in until the strip
+    // has loaded.
+    var gh = Math.max(1, Math.round(height * GROUND * dpr));
+    ground = document.createElement('canvas');
+    ground.width = canvas.width;
+    ground.height = gh;
+    var g = ground.getContext('2d');
+    if (strip && strip.complete && strip.naturalWidth) {
+      var pattern = g.createPattern(strip, 'repeat-x');
+      var k = gh / STRIP_HEIGHT;
+      pattern.setTransform(new DOMMatrix([k, 0, 0, k, 0, 0]));
+      g.fillStyle = pattern;
+    } else {
+      g.fillStyle = 'rgb(116, 136, 82)';
+    }
+    g.fillRect(0, 0, ground.width, gh);
+    var fade = g.createLinearGradient(0, 0, 0, gh);
+    fade.addColorStop(0, 'rgba(0,0,0,0)');
+    fade.addColorStop(0.15, 'rgba(0,0,0,1)');
+    g.globalCompositeOperation = 'destination-in';
+    g.fillStyle = fade;
+    g.fillRect(0, 0, ground.width, gh);
+    // Roll the top edge, so the strip reads as meadow, not a straight stripe.
+    g.beginPath();
+    g.moveTo(0, gh);
+    for (var px = 0; px <= ground.width; px += 8) {
+      var roll = 0.5 + 0.3 * Math.sin(px * 0.006 / dpr) + 0.2 * Math.sin(px * 0.023 / dpr + 1.3);
+      g.lineTo(px, roll * gh * 0.35);
+    }
+    g.lineTo(ground.width, gh);
+    g.closePath();
+    g.fill();
 
     blades = [];
     var rand = rng(7);
@@ -105,8 +138,7 @@
     ctx.clearRect(0, 0, width, height);
     var i = 0;
     for (; i < blades.length && blades[i].row === 0; i++) blade(blades[i], t);
-    ctx.fillStyle = ground;
-    ctx.fillRect(0, height * (1 - GROUND), width, height * GROUND);
+    ctx.drawImage(ground, 0, height * (1 - GROUND), width, height * GROUND);
     for (; i < blades.length; i++) blade(blades[i], t);
   }
 
@@ -142,6 +174,13 @@
       canvas.className = 'horizon-grass grass-band';
       canvas.setAttribute('aria-hidden', 'true');
       ctx = canvas.getContext('2d');
+      strip = new Image();
+      strip.onload = function () {
+        if (!canvas.isConnected) return;
+        layout();
+        draw(performance.now() / 1000);
+      };
+      strip.src = STRIP;
     }
     if (canvas.previousSibling !== img) img.after(canvas);
     io.disconnect();

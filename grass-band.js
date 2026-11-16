@@ -12,6 +12,7 @@
   var STRIP = 'assets/meadow-strip.webp';
   var STRIP_HEIGHT = 88;
   var ROLL = 0.3;   // the top edge rolls through this fraction of the band
+  var TIP_ROOM = 18;  // CSS px kept above the crest for the blade tips
 
   var canvas, ctx, band, img, strip;
 
@@ -30,14 +31,35 @@
     pattern.setTransform(new DOMMatrix([k, 0, 0, k, 0, 0]));
 
     // Two slow sine swells, so the rise has no visible period.
+    function crest(x) {
+      var roll = 0.5 + 0.3 * Math.sin(x * 0.006 / dpr) + 0.2 * Math.sin(x * 0.023 / dpr + 1.3);
+      return TIP_ROOM * dpr + roll * h * ROLL;   // headroom for the tips
+    }
     ctx.beginPath();
     ctx.moveTo(0, h);
-    for (var x = 0; x <= w + 8; x += 8) {
-      var roll = 0.5 + 0.3 * Math.sin(x * 0.006 / dpr) + 0.2 * Math.sin(x * 0.023 / dpr + 1.3);
-      ctx.lineTo(x, roll * h * ROLL);
-    }
+    for (var x = 0; x <= w + 8; x += 8) ctx.lineTo(x, crest(x));
     ctx.lineTo(w, h);
     ctx.closePath();
+
+    // A fringe of short blade tips along the crest, so the hill line breaks
+    // up into grass the way the painting's does instead of ending in a clean
+    // curve. Same fill, so the tips take the meadow's own colours. Seeded,
+    // so the fringe is the same on every visit.
+    var seed = 7;
+    function rand() {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    }
+    for (var bx = 0; bx < w; bx += (1.5 + rand() * 2.5) * dpr) {
+      var base = crest(bx) + 2 * dpr;
+      var len = (5 + Math.pow(rand(), 1.4) * 12) * dpr;
+      var half = (1 + rand() * 1.5) * dpr;
+      var lean = (0.2 + rand() * 0.5) * len;   // rightward, with the wind
+      ctx.moveTo(bx - half, base);
+      ctx.quadraticCurveTo(bx + lean * 0.3, base - len * 0.6, bx + lean, base - len);
+      ctx.quadraticCurveTo(bx + lean * 0.3 + half, base - len * 0.5, bx + half, base);
+      ctx.closePath();
+    }
     ctx.fillStyle = pattern;
     ctx.fill();
 

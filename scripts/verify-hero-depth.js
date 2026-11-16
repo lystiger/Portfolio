@@ -108,19 +108,36 @@ async function meanDiff(page, a, b) {
     await context.close();
   }
 
-  // Closing meadow band (grass-band.js): drawn on every viewport as a still,
-  // solid at the foot with sky above its rolling crest, the plate fallback
-  // hidden.
-  const bandState = (page) => page.evaluate(() => {
-    const c = document.querySelector('#contact canvas.grass-band');
-    const img = document.querySelector('#contact img.horizon-grass');
-    if (!c) return null;
-    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-    const rowAlpha = (y) => { let s = 0; for (let x = 0; x < c.width; x++) s += d[(y * c.width + x) * 4 + 3]; return s / c.width / 255; };
-    let sum = 0;
-    for (let i = 3; i < d.length; i += 40) sum += d[i];
-    return { top: rowAlpha(1), bottom: rowAlpha(c.height - 2), sum, imgHidden: getComputedStyle(img).visibility === 'hidden' };
-  });
+  // Closing meadow band (grass-band.js): drawn on every viewport, solid at
+  // the foot with sky above its rolling crest, the plate fallback hidden; it
+  // sways in the wind unless reduced motion asks for a still. The canvas may
+  // be WebGL, so it is read through screenshots of its box.
+  const bandShot = async (page) => {
+    const box = await page.evaluate(() => {
+      const c = document.querySelector('#contact canvas.grass-band');
+      if (!c) return null;
+      const r = c.getBoundingClientRect();
+      return { x: r.x, y: r.y, width: r.width, height: r.height,
+        imgHidden: getComputedStyle(document.querySelector('#contact img.horizon-grass')).visibility === 'hidden' };
+    });
+    if (!box) return null;
+    const shot = await page.screenshot({ clip: { x: box.x, y: box.y, width: box.width, height: box.height } });
+    return { box, shot };
+  };
+  // Share of green pixels (g clearly above b) along one row of a screenshot.
+  const greenShare = (page, shot, row) => page.evaluate(async ([src, row]) => {
+    const i = new Image();
+    await new Promise((res) => { i.onload = res; i.src = src; });
+    const c = document.createElement('canvas');
+    c.width = i.width; c.height = i.height;
+    const x = c.getContext('2d');
+    x.drawImage(i, 0, 0);
+    const y = row < 0 ? i.height + row : row;
+    const d = x.getImageData(0, y, i.width, 1).data;
+    let n = 0;
+    for (let k = 0; k < d.length; k += 4) if (d[k + 1] > d[k + 2] + 10) n++;
+    return n / i.width;
+  }, ['data:image/png;base64,' + shot.toString('base64'), row]);
   for (const [name, opts] of [
     ['desktop', { viewport: { width: 1440, height: 900 } }],
     ['phone', { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch: true }],
@@ -131,14 +148,18 @@ async function meanDiff(page, a, b) {
     page.on('request', (r) => { if (r.url().endsWith('.webm')) webm.push(r.url()); });
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await page.waitForTimeout(1500);
-    const a = await bandState(page);
+    const a = await bandShot(page);
     check(a !== null, `${name}: meadow band canvas mounted`);
     if (a) {
-      check(a.imgHidden, `${name}: plate fallback hidden under the drawn band`);
-      check(a.bottom > 0.98 && a.top < 0.2, `${name}: solid meadow at the foot, sky above the crest (bottom ${a.bottom.toFixed(2)}, top ${a.top.toFixed(2)})`);
-      await page.waitForTimeout(600);
-      const b = await bandState(page);
-      check(b.sum === a.sum, `${name}: band holds still`);
+      check(a.box.imgHidden, `${name}: plate fallback hidden under the drawn band`);
+      const top = await greenShare(page, a.shot, 1);
+      const bottom = await greenShare(page, a.shot, -2);
+      check(bottom > 0.98 && top < 0.2, `${name}: solid meadow at the foot, sky above the crest (bottom ${bottom.toFixed(2)}, top ${top.toFixed(2)})`);
+      await page.waitForTimeout(700);
+      const b = await bandShot(page);
+      const moved = await meanDiff(page, a.shot, b.shot);
+      check(name === 'reduced motion' ? moved === 0 : moved > 0.2,
+        `${name}: band ${name === 'reduced motion' ? 'holds still' : 'sways'} (mean diff ${moved.toFixed(2)})`);
     }
     if (name === 'desktop') await page.screenshot({ path: path.join(OUT, 'grass-desktop.png') });
     check(webm.length === 0, `${name}: no video requested`);

@@ -102,10 +102,12 @@ const fragmentShader = /* glsl */ `
     vec2 billow = vec2(sin(uv.y * 14.0 + t * 0.19), sin(uv.x * 11.0 - t * 0.15));
     shift += sky * (vec2(0.010 * sin(t * 0.052), 0.0) + 0.0022 * billow);
 
-    // Meadow: a wave travelling across it, stronger toward the front.
-    float wave = sin(t * 1.7 + uv.x * 34.0 + uv.y * 9.0);
+    // Meadow: gusts sweep across it left to right, leaning the grass with the
+    // wind, over a quicker flutter; stronger toward the front.
+    float sweep = 0.5 + 0.5 * sin(uv.x * 7.0 - t * 0.8);
+    float flutter = sin(t * 1.7 + uv.x * 34.0 + uv.y * 9.0);
     float near = mix(0.6, 1.5, clamp((depth - 0.65) / 0.2, 0.0, 1.0));
-    shift.x += meadow * near * gust * wave * 0.0016;
+    shift.x -= meadow * near * (gust * sweep * 0.0018 + flutter * 0.0008);
 
     vec3 color = texture2D(uBack, uv + shift).rgb;
 
